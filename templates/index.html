@@ -449,6 +449,72 @@
             gap: 20px;
         }
         
+        .previous-years-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 25px;
+            margin-top: 20px;
+        }
+        
+        .year-box {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-top: 6px solid #00DBC5;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        .year-box:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.15);
+        }
+        
+        .year-box-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #0A354F;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 10px;
+        }
+        
+        .year-box-stats {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .year-box-stat {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+        }
+        
+        .year-box-stat-label {
+            color: #666;
+            font-size: 13px;
+        }
+        
+        .year-box-stat-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: #00DBC5;
+        }
+        
+        .year-box-avg {
+            background: linear-gradient(135deg, #00DBC5 0%, #0A354F 100%);
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            margin-top: 15px;
+            font-weight: 600;
+        }
+
+        
         .site-card {
             background: white;
             border-radius: 10px;
@@ -557,6 +623,7 @@
                 <button class="tab-button active" onclick="switchTab('individual')">📋 Site Evaluation Scores 2026</button>
                 <button class="tab-button" onclick="switchTab('sites')">📊 Average Item Scores 2026</button>
                 <button class="tab-button" onclick="switchTab('year')">📊 Yearly Averages</button>
+                <button class="tab-button" onclick="switchTab('previous-years')">📚 Previous Years</button>
             </div>
             
             <div id="individual" class="tab-content active">
@@ -572,6 +639,14 @@
             
             <div id="year" class="tab-content">
                 <div id="year-stats"></div>
+            </div>
+            
+            <div id="previous-years" class="tab-content">
+                <h2 style="color: #0A354F; margin-bottom: 20px;">📚 Previous Years Data</h2>
+                <p style="color: #666; margin-bottom: 30px;">Historical evaluation scores and performance metrics from previous years.</p>
+                <div id="previous-years-grid" class="previous-years-grid">
+                    <!-- Year boxes will be populated here -->
+                </div>
             </div>
             
             <div id="site-detail" class="tab-content">
@@ -781,6 +856,8 @@
                 displayYearlyAverages();
             } else if (tabName === 'sites') {
                 displayAverageItemScores2026();
+            } else if (tabName === 'previous-years') {
+                displayPreviousYears();
             } else if (tabName.startsWith('year-')) {
                 displayYearStatsTab(tabName.replace('year-', ''));
             }
@@ -1502,6 +1579,70 @@
             
             html += '</div>';
             container.innerHTML = html;
+        }
+        
+        
+        function displayPreviousYears() {
+            // Fake data for previous years
+            const previousYearsData = [
+                {
+                    year: 2025,
+                    totalEvaluations: 24,
+                    averageScore: 78.5,
+                    highestScore: 92,
+                    lowestScore: 65,
+                    completedSites: 8
+                },
+                {
+                    year: 2024,
+                    totalEvaluations: 20,
+                    averageScore: 75.3,
+                    highestScore: 88,
+                    lowestScore: 62,
+                    completedSites: 7
+                },
+                {
+                    year: 2023,
+                    totalEvaluations: 18,
+                    averageScore: 72.8,
+                    highestScore: 85,
+                    lowestScore: 58,
+                    completedSites: 6
+                }
+            ];
+            
+            let html = '';
+            
+            previousYearsData.forEach(yearData => {
+                html += `
+                    <div class="year-box">
+                        <div class="year-box-title">📅 ${yearData.year}</div>
+                        <div class="year-box-stats">
+                            <div class="year-box-stat">
+                                <span class="year-box-stat-label">Total Evaluations</span>
+                                <span class="year-box-stat-value">${yearData.totalEvaluations}</span>
+                            </div>
+                            <div class="year-box-stat">
+                                <span class="year-box-stat-label">Completed Sites</span>
+                                <span class="year-box-stat-value">${yearData.completedSites}</span>
+                            </div>
+                            <div class="year-box-stat">
+                                <span class="year-box-stat-label">Highest Score</span>
+                                <span class="year-box-stat-value">${yearData.highestScore}</span>
+                            </div>
+                            <div class="year-box-stat">
+                                <span class="year-box-stat-label">Lowest Score</span>
+                                <span class="year-box-stat-value">${yearData.lowestScore}</span>
+                            </div>
+                        </div>
+                        <div class="year-box-avg">
+                            <div>Average Score: ${yearData.averageScore}%</div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            document.getElementById('previous-years-grid').innerHTML = html;
         }
         
         // Show tabs container when scores load
