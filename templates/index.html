@@ -1079,7 +1079,17 @@
             const chartData = {};
             
             selectedYears.sort().forEach(year => {
-                const yearScores = allScores.filter(s => new Date(s.timestamp).getFullYear() === year);
+                const yearScores = allScores.filter(s => {
+                    try {
+                        // Handle format like "1/15/2026 13:07:19"
+                        const dateStr = s.timestamp.split(' ')[0];
+                        const yearFromDate = parseInt(dateStr.split('/')[2]);
+                        return yearFromDate === year;
+                    } catch (e) {
+                        console.warn('Date parse error:', s.timestamp, e);
+                        return false;
+                    }
+                });
                 console.log(`Scores for year ${year}:`, yearScores.length);
                 
                 if (yearScores.length > 0) {
