@@ -879,7 +879,8 @@
             // Get all unique years from scores
             const years = new Set();
             allScores.forEach(score => {
-                const year = new Date(score.timestamp).getFullYear();
+                const dateStr = score.timestamp.split(' ')[0];
+                const year = parseInt(dateStr.split('/')[2]);
                 years.add(year);
             });
             
@@ -898,7 +899,11 @@
                 const isSelected = selectedYears.includes(year);
                 const isExample = historicalData[year] ? true : false;
                 const exampleLabel = isExample ? '<br><span style="font-size: 10px; color: #FF9800; font-weight: bold;">(example)</span>' : '';
-                const currentYearEvals = allScores.filter(s => new Date(s.timestamp).getFullYear() === year).length;
+                const currentYearEvals = allScores.filter(s => {
+                    const dateStr = s.timestamp.split(' ')[0];
+                    const scoreYear = parseInt(dateStr.split('/')[2]);
+                    return scoreYear === year;
+                }).length;
                 const evalCount = historicalData[year] ? historicalData[year].evaluations : currentYearEvals;
                 const boxBackground = isExample ? (isSelected ? '#e8f4f0' : '#fffaf0') : (isSelected ? '#e8f9f7' : '#f9f9f9');
                 const borderColor = isSelected ? '#00DBC5' : (isExample ? '#FFB74D' : '#ddd');
@@ -927,7 +932,11 @@
                 if (historicalData[year]) {
                     yearInfo = historicalData[year];
                 } else {
-                    const yearScores = allScores.filter(s => new Date(s.timestamp).getFullYear() === year);
+                    const yearScores = allScores.filter(s => {
+                        const dateStr = s.timestamp.split(' ')[0];
+                        const scoreYear = parseInt(dateStr.split('/')[2]);
+                        return scoreYear === year;
+                    });
                     if (yearScores.length === 0) return;
                     const totalScores = yearScores.reduce((sum, s) => sum + (s.total_score || 0), 0);
                     yearInfo = {
@@ -1387,8 +1396,16 @@
             if (selectedYears.length !== 2) return;
             
             const [year1, year2] = selectedYears.sort((a, b) => a - b);
-            const scores1 = allScores.filter(s => new Date(s.timestamp).getFullYear() === year1);
-            const scores2 = allScores.filter(s => new Date(s.timestamp).getFullYear() === year2);
+            const scores1 = allScores.filter(s => {
+                const dateStr = s.timestamp.split(' ')[0];
+                const scoreYear = parseInt(dateStr.split('/')[2]);
+                return scoreYear === year1;
+            });
+            const scores2 = allScores.filter(s => {
+                const dateStr = s.timestamp.split(' ')[0];
+                const scoreYear = parseInt(dateStr.split('/')[2]);
+                return scoreYear === year2;
+            });
             
             // Calculate averages by category and item
             const getAverages = (scores) => {
@@ -1464,7 +1481,8 @@
         function displayAverageItemScores2026() {
             const currentYear = new Date().getFullYear();
             const scores2026 = allScores.filter(score => {
-                const scoreYear = new Date(score.timestamp).getFullYear();
+                const dateStr = score.timestamp.split(' ')[0];
+                const scoreYear = parseInt(dateStr.split('/')[2]);
                 return scoreYear === currentYear;
             });
             
@@ -1706,7 +1724,8 @@
             };
             
             allScores.forEach(score => {
-                const scoreYear = new Date(score.timestamp).getFullYear();
+                const dateStr = score.timestamp.split(' ')[0];
+                const scoreYear = parseInt(dateStr.split('/')[2]);
                 if (scoreYear === currentYear) {
                     stats.totalScores++;
                     stats.totalPoints += score.total_score;
@@ -1743,7 +1762,8 @@
             const stats = {};
             
             allScores.forEach(score => {
-                const year = new Date(score.timestamp).getFullYear();
+                const dateStr = score.timestamp.split(' ')[0];
+                const year = parseInt(dateStr.split('/')[2]);
                 if (!stats[year]) {
                     stats[year] = {
                         totalScores: 0,
@@ -1898,7 +1918,8 @@
             
             // Get site scores for this year
             allScores.forEach(score => {
-                const scoreYear = new Date(score.timestamp).getFullYear().toString();
+                const dateStr = score.timestamp.split(' ')[0];
+                const scoreYear = parseInt(dateStr.split('/')[2]).toString();
                 if (scoreYear === year) {
                     const siteName = score.site_name || 'Unknown';
                     if (!stats.siteScores[siteName]) {
