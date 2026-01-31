@@ -893,12 +893,16 @@
             
             sortedYears.forEach(year => {
                 const isSelected = selectedYears.includes(year);
+                const isExample = historicalData[year] ? true : false;
+                const exampleLabel = isExample ? '<br><span style="font-size: 10px; color: #FF9800; font-weight: bold;">(example)</span>' : '';
                 const currentYearEvals = allScores.filter(s => new Date(s.timestamp).getFullYear() === year).length;
                 const evalCount = historicalData[year] ? historicalData[year].evaluations : currentYearEvals;
+                const boxBackground = isExample ? (isSelected ? '#e8f4f0' : '#fffaf0') : (isSelected ? '#e8f9f7' : '#f9f9f9');
+                const borderColor = isSelected ? '#00DBC5' : (isExample ? '#FFB74D' : '#ddd');
                 
-                html += `<div onclick="toggleYearSelection(${year})" style="padding: 15px; border: 2px solid ${isSelected ? '#00DBC5' : '#ddd'}; border-radius: 8px; text-align: center; cursor: pointer; background: ${isSelected ? '#e8f9f7' : '#f9f9f9'}; transition: all 0.2s;">
+                html += `<div onclick="toggleYearSelection(${year})" style="padding: 15px; border: 2px solid ${borderColor}; border-radius: 8px; text-align: center; cursor: pointer; background: ${boxBackground}; transition: all 0.2s;">
                     <div style="font-size: 24px; font-weight: bold; color: ${isSelected ? '#00DBC5' : '#333'};">${year}</div>
-                    <div style="font-size: 12px; color: #666; margin-top: 5px;">${evalCount} evals</div>
+                    <div style="font-size: 12px; color: #666; margin-top: 5px;">${evalCount} evals${exampleLabel}</div>
                 </div>`;
             });
             
@@ -912,6 +916,10 @@
             html += '<tbody>';
             
             sortedYears.forEach(year => {
+                const isExample = historicalData[year] ? true : false;
+                const exampleLabel = isExample ? ' <span style="color: #FF9800; font-size: 11px; font-weight: bold;">(example)</span>' : '';
+                const rowBackground = isExample ? 'background: #fff9e6;' : '';
+                
                 let yearInfo;
                 if (historicalData[year]) {
                     yearInfo = historicalData[year];
@@ -927,7 +935,7 @@
                     };
                 }
                 
-                html += `<tr style="border-bottom: 1px solid #eee;"><td style="padding: 12px; color: #333; font-weight: 600;">${year}</td><td style="padding: 12px; text-align: center; color: #666;">${yearInfo.evaluations}</td><td style="padding: 12px; text-align: center; color: #00DBC5; font-weight: 600;">${yearInfo.average}%</td><td style="padding: 12px; text-align: center; color: #666;">${yearInfo.highest}</td><td style="padding: 12px; text-align: center; color: #666;">${yearInfo.lowest}</td></tr>`;
+                html += `<tr style="border-bottom: 1px solid #eee; ${rowBackground}"><td style="padding: 12px; color: #333; font-weight: 600;">${year}${exampleLabel}</td><td style="padding: 12px; text-align: center; color: #666;">${yearInfo.evaluations}</td><td style="padding: 12px; text-align: center; color: #00DBC5; font-weight: 600;">${yearInfo.average}%</td><td style="padding: 12px; text-align: center; color: #666;">${yearInfo.highest}</td><td style="padding: 12px; text-align: center; color: #666;">${yearInfo.lowest}</td></tr>`;
             });
             
             html += '</tbody></table>';
@@ -1657,8 +1665,8 @@
             
             previousYearsData.forEach(yearData => {
                 html += `
-                    <div class="year-box">
-                        <div class="year-box-title">📅 ${yearData.year}</div>
+                    <div class="year-box" style="border-top-color: #FFB74D; background: linear-gradient(to bottom, #fffaf0, #fff);">
+                        <div class="year-box-title">📅 ${yearData.year} <span style="color: #FF9800; font-size: 12px; font-weight: bold;">(example)</span></div>
                         <div class="year-box-stats">
                             <div class="year-box-stat">
                                 <span class="year-box-stat-label">Total Evaluations</span>
@@ -1677,7 +1685,7 @@
                                 <span class="year-box-stat-value">${yearData.lowestScore}</span>
                             </div>
                         </div>
-                        <div class="year-box-avg">
+                        <div class="year-box-avg" style="background: linear-gradient(135deg, #FFB74D 0%, #FF9800 100%);">
                             <div>Average Score: ${yearData.averageScore}%</div>
                         </div>
                     </div>
