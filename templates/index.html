@@ -1036,27 +1036,15 @@
             
             html += '</div>';
             
-            setTimeout(() => {
-                if (selectedQuestion && selectedYears.length >= 2) {
-                    const canvas = document.getElementById('comparisonChart');
-                    if (canvas) {
-                        displayComparisonChart();
-                    }
-                }
-            }, 250);
-            
             return html;
         }
         
         function selectQuestion(category) {
             selectedQuestion = category;
-            // Re-render after selection with proper timing
-            setTimeout(() => {
-                const canvas = document.getElementById('comparisonChart');
-                if (canvas && selectedYears.length >= 2) {
-                    displayComparisonChart();
-                }
-            }, 100);
+            // Rebuild and render chart
+            displayYearlyAverages();
+            // Give DOM time to update
+            setTimeout(displayComparisonChart, 300);
         }
         
         function displayComparisonChart() {
