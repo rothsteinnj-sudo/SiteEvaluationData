@@ -1048,7 +1048,10 @@
         }
         
         function displayComparisonChart() {
-            console.log('displayComparisonChart called:', { selectedQuestion, selectedYearsLength: selectedYears.length });
+            console.log('===== displayComparisonChart START =====');
+            console.log('selectedQuestion:', selectedQuestion);
+            console.log('selectedYears:', selectedYears);
+            console.log('allScores:', allScores);
             
             if (!selectedQuestion || selectedYears.length < 2) {
                 console.warn('Cannot render chart: selectedQuestion=', selectedQuestion, 'selectedYears=', selectedYears);
@@ -1056,12 +1059,14 @@
             }
             
             const ctx = document.getElementById('comparisonChart');
+            console.log('Canvas element:', ctx);
             if (!ctx) {
                 console.warn('Canvas element not found');
                 return;
             }
             
-            console.log('Canvas found, allScores length:', allScores.length);
+            console.log('Canvas found, Chart available:', typeof Chart !== 'undefined');
+            console.log('allScores length:', allScores.length);
             
             // Calculate category averages for selected years
             const chartData = {};
@@ -1182,10 +1187,13 @@
                         }
                     }
                 });
-                console.log('Chart rendered successfully');
+                console.log('===== Chart rendered successfully =====');
+                console.log('Chart instance:', window.comparisonChartInstance);
             } catch (error) {
-                console.error('Error creating chart:', error);
+                console.error('===== Error creating chart: =====', error);
+                console.error('Error details:', error.message, error.stack);
             }
+            console.log('===== displayComparisonChart END =====');
         }
         
         function displayYearComparison() {
