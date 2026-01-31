@@ -1039,29 +1039,50 @@
             html += '</div>';
             
             setTimeout(() => {
-                if (selectedQuestion && selectedYears.length >= 2 && document.getElementById('comparisonChart')) {
-                    displayComparisonChart();
+                if (selectedQuestion && selectedYears.length >= 2) {
+                    const canvas = document.getElementById('comparisonChart');
+                    if (canvas) {
+                        displayComparisonChart();
+                    }
                 }
-            }, 100);
+            }, 250);
             
             return html;
         }
         
         function selectQuestion(category) {
             selectedQuestion = category;
+            // Re-render after selection with proper timing
+            setTimeout(() => {
+                const canvas = document.getElementById('comparisonChart');
+                if (canvas && selectedYears.length >= 2) {
+                    displayComparisonChart();
+                }
+            }, 100);
         }
         
         function displayComparisonChart() {
-            if (!selectedQuestion || selectedYears.length < 2) return;
+            console.log('displayComparisonChart called:', { selectedQuestion, selectedYearsLength: selectedYears.length });
+            
+            if (!selectedQuestion || selectedYears.length < 2) {
+                console.warn('Cannot render chart: selectedQuestion=', selectedQuestion, 'selectedYears=', selectedYears);
+                return;
+            }
             
             const ctx = document.getElementById('comparisonChart');
-            if (!ctx) return;
+            if (!ctx) {
+                console.warn('Canvas element not found');
+                return;
+            }
+            
+            console.log('Canvas found, allScores length:', allScores.length);
             
             // Calculate category averages for selected years
             const chartData = {};
             
             selectedYears.sort().forEach(year => {
                 const yearScores = allScores.filter(s => new Date(s.timestamp).getFullYear() === year);
+                console.log(`Scores for year ${year}:`, yearScores.length);
                 
                 if (yearScores.length > 0) {
                     const categoryScores = yearScores
@@ -1087,48 +1108,52 @@
             const averages = years.map(y => chartData[y].average);
             const counts = years.map(y => chartData[y].count);
             
+            console.log('Chart data ready:', { years, averages, counts });
+            
             // Destroy existing chart if it exists
             if (window.comparisonChartInstance) {
                 window.comparisonChartInstance.destroy();
+                window.comparisonChartInstance = null;
             }
             
             const colors = ['#00DBC5', '#667eea', '#FF9800', '#81C784', '#FF6B6B', '#FFD93D'];
             
-            window.comparisonChartInstance = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: years.map((y, i) => `${y}\n(n=${counts[i]})`),
-                    datasets: [
-                        {
-                            label: `${selectedQuestion} Average Score`,
-                            data: averages,
-                            backgroundColor: averages.map((_, i) => colors[i % colors.length]),
-                            borderColor: '#333',
-                            borderWidth: 2,
-                            borderRadius: 8,
-                            maxBarThickness: 80
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    indexAxis: 'x',
-                    plugins: {
-                        legend: {
-                            display: true,
-                            position: 'top',
-                            labels: {
-                                font: { size: 12, weight: 'bold' }
+            try {
+                window.comparisonChartInstance = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: years.map((y, i) => `${y}\n(n=${counts[i]})`),
+                        datasets: [
+                            {
+                                label: `${selectedQuestion} Average Score`,
+                                data: averages,
+                                backgroundColor: averages.map((_, i) => colors[i % colors.length]),
+                                borderColor: '#333',
+                                borderWidth: 2,
+                                borderRadius: 8,
+                                maxBarThickness: 80
                             }
-                        },
-                        title: {
-                            display: true,
-                            text: `${selectedQuestion} - Yearly Average Comparison`,
-                            font: { size: 14, weight: 'bold' },
-                            color: '#333',
-                            padding: 15
-                        }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        indexAxis: 'x',
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top',
+                                labels: {
+                                    font: { size: 12, weight: 'bold' }
+                                }
+                            },
+                            title: {
+                                display: true,
+                                text: `${selectedQuestion} - Yearly Average Comparison`,
+                                font: { size: 14, weight: 'bold' },
+                                color: '#333',
+                                padding: 15
+                            }
                     },
                     scales: {
                         y: {
@@ -1151,7 +1176,11 @@
                         }
                     }
                 }
-            });
+                });
+                console.log('Chart created successfully');
+            } catch (error) {
+                console.error('Error creating chart:', error);
+            }
         }
         
         function displayYearComparison() {
