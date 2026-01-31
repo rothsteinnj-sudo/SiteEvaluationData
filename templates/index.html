@@ -451,8 +451,8 @@
         
         .previous-years-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-            gap: 25px;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
             margin-top: 20px;
         }
         
@@ -1788,66 +1788,195 @@
         
         
         function displayPreviousYears() {
-            // Fake data for previous years
+            // Fake data for previous years with detailed evaluations
             const previousYearsData = [
                 {
                     year: 2025,
-                    totalEvaluations: 24,
-                    averageScore: 78.5,
-                    highestScore: 92,
-                    lowestScore: 65,
-                    completedSites: 8
+                    site_name: 'Clinical Research Center - 2025',
+                    timestamp: '2025-12-15',
+                    total_score: 82,
+                    category_scores: {
+                        'Study Capabilities': 28,
+                        'Phase Capabilities': 35,
+                        'Key Personnel': 19
+                    },
+                    items: {
+                        'Study Capabilities': [
+                            { name: 'Studies enrolling', value: 6, points: 5 },
+                            { name: 'Active studies', value: 8, points: 2 }
+                        ],
+                        'Phase Capabilities': [
+                            { name: 'Inpatient', value: 'Yes', points: 3 },
+                            { name: 'PK/PD', value: 'Yes', points: 1 },
+                            { name: 'Phase 2-4', value: 'Yes', points: 1 },
+                            { name: 'High-volume', value: 'Yes', points: 1 },
+                            { name: 'PBMC', value: 'Yes', points: 1 },
+                            { name: 'NIH Studies', value: 'Yes', points: 1 }
+                        ],
+                        'Key Personnel': [
+                            { name: 'Total Coordinators', value: 7, points: 1 },
+                            { name: 'Certified Coordinators', value: 4, points: 4 },
+                            { name: 'Total Investigators', value: 5, points: 2 }
+                        ]
+                    }
+                },
+                {
+                    year: 2025,
+                    site_name: 'Midwest Medical Institute - 2025',
+                    timestamp: '2025-11-20',
+                    total_score: 75,
+                    category_scores: {
+                        'Study Capabilities': 20,
+                        'Phase Capabilities': 32,
+                        'Key Personnel': 23
+                    },
+                    items: {
+                        'Study Capabilities': [
+                            { name: 'Studies enrolling', value: 4, points: 1 },
+                            { name: 'Active studies', value: 5, points: 0 }
+                        ],
+                        'Phase Capabilities': [
+                            { name: 'Inpatient', value: 'No', points: 0 },
+                            { name: 'PK/PD', value: 'Yes', points: 1 },
+                            { name: 'Phase 2-4', value: 'Yes', points: 1 },
+                            { name: 'High-volume', value: 'No', points: 0 },
+                            { name: 'PBMC', value: 'Yes', points: 1 },
+                            { name: 'NIH Studies', value: 'Yes', points: 1 }
+                        ],
+                        'Key Personnel': [
+                            { name: 'Total Coordinators', value: 6, points: 1 },
+                            { name: 'Certified Coordinators', value: 5, points: 4 },
+                            { name: 'Total Investigators', value: 4, points: 2 }
+                        ]
+                    }
                 },
                 {
                     year: 2024,
-                    totalEvaluations: 20,
-                    averageScore: 75.3,
-                    highestScore: 88,
-                    lowestScore: 62,
-                    completedSites: 7
+                    site_name: 'Community Research Partners - 2024',
+                    timestamp: '2024-10-18',
+                    total_score: 68,
+                    category_scores: {
+                        'Study Capabilities': 18,
+                        'Phase Capabilities': 28,
+                        'Key Personnel': 22
+                    },
+                    items: {
+                        'Study Capabilities': [
+                            { name: 'Studies enrolling', value: 3, points: 1 },
+                            { name: 'Active studies', value: 4, points: 0 }
+                        ],
+                        'Phase Capabilities': [
+                            { name: 'Inpatient', value: 'No', points: 0 },
+                            { name: 'PK/PD', value: 'No', points: 0 },
+                            { name: 'Phase 2-4', value: 'Yes', points: 1 },
+                            { name: 'High-volume', value: 'No', points: 0 },
+                            { name: 'PBMC', value: 'Yes', points: 1 },
+                            { name: 'NIH Studies', value: 'Yes', points: 1 }
+                        ],
+                        'Key Personnel': [
+                            { name: 'Total Coordinators', value: 5, points: 1 },
+                            { name: 'Certified Coordinators', value: 3, points: 2 },
+                            { name: 'Total Investigators', value: 3, points: 0 }
+                        ]
+                    }
                 },
                 {
                     year: 2023,
-                    totalEvaluations: 18,
-                    averageScore: 72.8,
-                    highestScore: 85,
-                    lowestScore: 58,
-                    completedSites: 6
+                    site_name: 'Regional Medical Center - 2023',
+                    timestamp: '2023-09-22',
+                    total_score: 65,
+                    category_scores: {
+                        'Study Capabilities': 15,
+                        'Phase Capabilities': 25,
+                        'Key Personnel': 25
+                    },
+                    items: {
+                        'Study Capabilities': [
+                            { name: 'Studies enrolling', value: 2, points: 0 },
+                            { name: 'Active studies', value: 3, points: 0 }
+                        ],
+                        'Phase Capabilities': [
+                            { name: 'Inpatient', value: 'No', points: 0 },
+                            { name: 'PK/PD', value: 'No', points: 0 },
+                            { name: 'Phase 2-4', value: 'Yes', points: 1 },
+                            { name: 'High-volume', value: 'No', points: 0 },
+                            { name: 'PBMC', value: 'No', points: 0 },
+                            { name: 'NIH Studies', value: 'Yes', points: 1 }
+                        ],
+                        'Key Personnel': [
+                            { name: 'Total Coordinators', value: 4, points: 0 },
+                            { name: 'Certified Coordinators', value: 2, points: 2 },
+                            { name: 'Total Investigators', value: 5, points: 2 }
+                        ]
+                    }
                 }
             ];
             
-            let html = '';
+            const grid = document.getElementById('previous-years-grid');
+            grid.innerHTML = '';
+            grid.style.display = 'grid';
             
-            previousYearsData.forEach(yearData => {
-                html += `
-                    <div class="year-box" style="border-top-color: #FFB74D; background: linear-gradient(to bottom, #fffaf0, #fff);">
-                        <div class="year-box-title">📅 ${yearData.year} <span style="color: #FF9800; font-size: 12px; font-weight: bold;">(example)</span></div>
-                        <div class="year-box-stats">
-                            <div class="year-box-stat">
-                                <span class="year-box-stat-label">Total Evaluations</span>
-                                <span class="year-box-stat-value">${yearData.totalEvaluations}</span>
+            previousYearsData.forEach(score => {
+                const timestamp = new Date(score.timestamp).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric'
+                });
+                
+                const card = document.createElement('div');
+                card.className = 'score-card';
+                
+                let categoriesHTML = '';
+                
+                Object.keys(score.items).forEach(catName => {
+                    const cat = {
+                        name: catName,
+                        points: score.category_scores[catName] || 0
+                    };
+                    
+                    const items = score.items[catName];
+                    
+                    const itemsHTML = items.map(item => `
+                        <div class="item-row">
+                            <span class="item-name">${item.name}</span>
+                            <span class="item-value">${item.value}</span>
+                            ${formatPoints(item.points)}
+                        </div>
+                    `).join('');
+                    
+                    categoriesHTML += `
+                        <div class="category-section">
+                            <div class="category-header" onclick="toggleCategory(this)">
+                                <div class="category-title">
+                                    <span class="category-toggle">▶</span>
+                                    ${cat.name}
+                                </div>
+                                ${formatPoints(cat.points)}
                             </div>
-                            <div class="year-box-stat">
-                                <span class="year-box-stat-label">Completed Sites</span>
-                                <span class="year-box-stat-value">${yearData.completedSites}</span>
-                            </div>
-                            <div class="year-box-stat">
-                                <span class="year-box-stat-label">Highest Score</span>
-                                <span class="year-box-stat-value">${yearData.highestScore}</span>
-                            </div>
-                            <div class="year-box-stat">
-                                <span class="year-box-stat-label">Lowest Score</span>
-                                <span class="year-box-stat-value">${yearData.lowestScore}</span>
+                            <div class="category-items">
+                                ${itemsHTML}
                             </div>
                         </div>
-                        <div class="year-box-avg" style="background: linear-gradient(135deg, #FFB74D 0%, #FF9800 100%);">
-                            <div>Average Score: ${yearData.averageScore}%</div>
+                    `;
+                });
+                
+                card.innerHTML = `
+                    <div class="score-header">
+                        <div>
+                            <div class="response-id">${score.site_name} <span style="color: #FF9800; font-size: 12px; font-weight: bold;">(example)</span></div>
+                            <div class="timestamp">${timestamp}</div>
                         </div>
                     </div>
+                    
+                    ${categoriesHTML}
+                    
+                    <div class="total-score">
+                        Total: ${score.total_score > 0 ? '+' : ''}${score.total_score}
+                    </div>
                 `;
+                
+                grid.appendChild(card);
             });
-            
-            document.getElementById('previous-years-grid').innerHTML = html;
         }
         
         // Show tabs container when scores load
