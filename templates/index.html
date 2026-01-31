@@ -2092,7 +2092,7 @@
                     site_name: 'Clinical Research Center - 2025',
                     timestamp: '2025-12-15',
                     total_score: 82,
-                    category_scores: {
+                    category_totals: {
                         'Study Capabilities': 28,
                         'Phase Capabilities': 35,
                         'Key Personnel': 19
@@ -2122,7 +2122,7 @@
                     site_name: 'Midwest Medical Institute - 2025',
                     timestamp: '2025-11-20',
                     total_score: 75,
-                    category_scores: {
+                    category_totals: {
                         'Study Capabilities': 20,
                         'Phase Capabilities': 32,
                         'Key Personnel': 23
@@ -2152,7 +2152,7 @@
                     site_name: 'Community Research Partners - 2024',
                     timestamp: '2024-10-18',
                     total_score: 68,
-                    category_scores: {
+                    category_totals: {
                         'Study Capabilities': 18,
                         'Phase Capabilities': 28,
                         'Key Personnel': 22
@@ -2182,7 +2182,7 @@
                     site_name: 'Regional Medical Center - 2023',
                     timestamp: '2023-09-22',
                     total_score: 65,
-                    category_scores: {
+                    category_totals: {
                         'Study Capabilities': 15,
                         'Phase Capabilities': 25,
                         'Key Personnel': 25
@@ -2228,7 +2228,7 @@
                 Object.keys(score.items).forEach(catName => {
                     const cat = {
                         name: catName,
-                        points: score.category_scores[catName] || 0
+                        points: score.category_totals[catName] || 0
                     };
                     
                     const items = score.items[catName];
