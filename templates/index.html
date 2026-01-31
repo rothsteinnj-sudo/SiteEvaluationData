@@ -556,7 +556,7 @@
             <div class="tabs" id="tabs-list">
                 <button class="tab-button active" onclick="switchTab('individual')">📋 Site Evaluation Scores 2026</button>
                 <button class="tab-button" onclick="switchTab('sites')">📊 Average Item Scores 2026</button>
-                <button class="tab-button" onclick="switchTab('year')">📊 This Year</button>
+                <button class="tab-button" onclick="switchTab('year')">📊 Yearly Averages</button>
             </div>
             
             <div id="individual" class="tab-content active">
@@ -778,12 +778,143 @@
             
             // Calculate and display stats if needed
             if (tabName === 'year') {
-                displayYearStats();
+                displayYearlyAverages();
             } else if (tabName === 'sites') {
                 displayAverageItemScores2026();
             } else if (tabName.startsWith('year-')) {
                 displayYearStatsTab(tabName.replace('year-', ''));
             }
+        }
+        
+        let selectedYears = [];
+        
+        function displayYearlyAverages() {
+            // Get all unique years from scores
+            const years = new Set();
+            allScores.forEach(score => {
+                const year = new Date(score.timestamp).getFullYear();
+                years.add(year);
+            });
+            
+            const sortedYears = Array.from(years).sort((a, b) => b - a);
+            
+            let html = '<div style="background: white; padding: 20px; border-radius: 10px;">';
+            html += '<h2 style="color: #00DBC5; margin-bottom: 20px;">Yearly Averages Comparison</h2>';
+            html += '<p style="color: #666; margin-bottom: 20px;">Select two years to compare average scores</p>';
+            
+            html += '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; margin-bottom: 30px;" id="year-selector">';
+            
+            sortedYears.forEach(year => {
+                const isSelected = selectedYears.includes(year);
+                html += `<div onclick="toggleYearSelection(${year})" style="padding: 15px; border: 2px solid ${isSelected ? '#00DBC5' : '#ddd'}; border-radius: 8px; text-align: center; cursor: pointer; background: ${isSelected ? '#e8f9f7' : '#f9f9f9'}; transition: all 0.2s;">
+                    <div style="font-size: 24px; font-weight: bold; color: ${isSelected ? '#00DBC5' : '#333'};">${year}</div>
+                    <div style="font-size: 12px; color: #666; margin-top: 5px;">${allScores.filter(s => new Date(s.timestamp).getFullYear() === year).length} evals</div>
+                </div>`;
+            });
+            
+            html += '</div>';
+            
+            if (selectedYears.length === 2) {
+                html += '<div id="comparison-charts" style="margin-top: 30px;"></div>';
+            } else if (selectedYears.length === 1) {
+                html += '<p style="color: #999; font-style: italic;">Select another year to compare</p>';
+            }
+            
+            html += '</div>';
+            document.getElementById('year-stats').innerHTML = html;
+            
+            if (selectedYears.length === 2) {
+                displayYearComparison();
+            }
+        }
+        
+        function toggleYearSelection(year) {
+            if (selectedYears.includes(year)) {
+                selectedYears = selectedYears.filter(y => y !== year);
+            } else if (selectedYears.length < 2) {
+                selectedYears.push(year);
+            } else {
+                selectedYears = [selectedYears[1], year];
+            }
+            displayYearlyAverages();
+        }
+        
+        function displayYearComparison() {
+            if (selectedYears.length !== 2) return;
+            
+            const [year1, year2] = selectedYears.sort((a, b) => a - b);
+            const scores1 = allScores.filter(s => new Date(s.timestamp).getFullYear() === year1);
+            const scores2 = allScores.filter(s => new Date(s.timestamp).getFullYear() === year2);
+            
+            // Calculate averages by category and item
+            const getAverages = (scores) => {
+                const categories = {
+                    'Study Capabilities': {},
+                    'Phase Capabilities': {},
+                    'Key Personnel': {}
+                };
+                
+                scores.forEach(score => {
+                    Object.keys(score.items || {}).forEach(category => {
+                        const items = score.items[category] || [];
+                        items.forEach(item => {
+                            if (!categories[category][item.item]) {
+                                categories[category][item.item] = { total: 0, count: 0 };
+                            }
+                            categories[category][item.item].total += item.points || 0;
+                            categories[category][item.item].count += 1;
+                        });
+                    });
+                });
+                
+                // Convert to averages
+                Object.keys(categories).forEach(cat => {
+                    Object.keys(categories[cat]).forEach(item => {
+                        categories[cat][item] = (categories[cat][item].total / categories[cat][item].count).toFixed(2);
+                    });
+                });
+                
+                return categories;
+            };
+            
+            const avg1 = getAverages(scores1);
+            const avg2 = getAverages(scores2);
+            
+            let html = '';
+            
+            Object.keys(avg1).forEach(category => {
+                html += `<div style="margin-bottom: 40px;">
+                    <h3 style="color: #0A354F; margin-bottom: 20px;">${category}</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">`;
+                
+                Object.keys(avg1[category]).forEach(item => {
+                    const val1 = parseFloat(avg1[category][item]);
+                    const val2 = parseFloat(avg2[category][item] || 0);
+                    const maxVal = Math.max(val1, val2, 5);
+                    
+                    html += `<div style="background: #f9f9f9; padding: 15px; border-radius: 8px; border-left: 4px solid #00DBC5;">
+                        <div style="font-weight: 600; color: #333; margin-bottom: 15px;">${item}</div>
+                        <div style="display: flex; gap: 30px;">
+                            <div style="flex: 1;">
+                                <div style="font-size: 12px; color: #666; margin-bottom: 8px;">${year1}</div>
+                                <div style="width: 100%; height: 30px; background: #e8e8e8; border-radius: 4px; overflow: hidden;">
+                                    <div style="width: ${(val1 / maxVal * 100)}%; height: 100%; background: #00DBC5; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 12px;">${val1}</div>
+                                </div>
+                            </div>
+                            <div style="flex: 1;">
+                                <div style="font-size: 12px; color: #666; margin-bottom: 8px;">${year2}</div>
+                                <div style="width: 100%; height: 30px; background: #e8e8e8; border-radius: 4px; overflow: hidden;">
+                                    <div style="width: ${(val2 / maxVal * 100)}%; height: 100%; background: #667eea; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 12px;">${val2}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>`;
+                });
+                
+                html += '</div></div>';
+            });
+            
+            document.getElementById('comparison-charts').innerHTML = html;
         }
         
         function displayAverageItemScores2026() {
