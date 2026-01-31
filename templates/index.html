@@ -583,6 +583,7 @@
             gap: 20px;
         }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
     <div class="container">
@@ -941,29 +942,188 @@
             html += '</tbody></table>';
             html += '</div>';
             
-            if (selectedYears.length === 2) {
-                html += '<div id="comparison-charts" style="margin-top: 30px;"></div>';
-            } else if (selectedYears.length === 1) {
-                html += '<p style="color: #999; font-style: italic; margin-top: 20px;">✓ Select another year to compare</p>';
+            // Show question selection if years are selected
+            if (selectedYears.length > 0) {
+                html += displayQuestionSelection();
+            } else {
+                html += '<p style="color: #999; font-style: italic; margin-top: 20px;">✓ Select one or more years to compare</p>';
             }
             
             html += '</div>';
             document.getElementById('year-stats').innerHTML = html;
-            
-            if (selectedYears.length === 2) {
-                displayYearComparison();
-            }
         }
         
         function toggleYearSelection(year) {
             if (selectedYears.includes(year)) {
                 selectedYears = selectedYears.filter(y => y !== year);
-            } else if (selectedYears.length < 2) {
-                selectedYears.push(year);
             } else {
-                selectedYears = [selectedYears[1], year];
+                selectedYears.push(year);
             }
             displayYearlyAverages();
+        }
+        
+        let selectedQuestion = null;
+        
+        function displayQuestionSelection() {
+            // Get all unique questions/categories from scores
+            const questions = new Set();
+            allScores.forEach(score => {
+                if (score.responses) {
+                    Object.keys(score.responses).forEach(q => {
+                        questions.add(q);
+                    });
+                }
+            });
+            
+            const sortedQuestions = Array.from(questions).sort();
+            
+            if (sortedQuestions.length === 0) {
+                return '<p style="color: #999; margin-top: 20px;">No questions found in the data.</p>';
+            }
+            
+            let html = '<div style="margin-top: 30px; background: #f0f8f7; padding: 20px; border-radius: 10px;">';
+            html += '<h3 style="color: #00DBC5; margin-bottom: 15px;">Select a Question/Category to Compare</h3>';
+            html += '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px;">';
+            
+            sortedQuestions.forEach(question => {
+                const isSelected = selectedQuestion === question;
+                const bgColor = isSelected ? '#00DBC5' : '#ffffff';
+                const textColor = isSelected ? '#ffffff' : '#333';
+                
+                html += `<div onclick="selectQuestion('${question.replace(/'/g, "\\'")}'); displayYearlyAverages();" style="padding: 12px; border: 2px solid ${isSelected ? '#00DBC5' : '#ddd'}; border-radius: 8px; cursor: pointer; background: ${bgColor}; color: ${textColor}; transition: all 0.2s; font-weight: ${isSelected ? '600' : '500'};">
+                    ${question}
+                </div>`;
+            });
+            
+            html += '</div>';
+            
+            // Show chart if question is selected
+            if (selectedQuestion) {
+                html += `<div id="comparison-chart-container" style="margin-top: 30px;"><canvas id="comparisonChart"></canvas></div>`;
+            }
+            
+            html += '</div>';
+            
+            setTimeout(() => {
+                if (selectedQuestion && document.getElementById('comparisonChart')) {
+                    displayComparisonChart();
+                }
+            }, 100);
+            
+            return html;
+        }
+        
+        function selectQuestion(question) {
+            selectedQuestion = question;
+        }
+        
+        function displayComparisonChart() {
+            if (!selectedQuestion || selectedYears.length === 0) return;
+            
+            const ctx = document.getElementById('comparisonChart');
+            if (!ctx) return;
+            
+            // Calculate averages for selected question across selected years
+            const chartData = {};
+            
+            selectedYears.forEach(year => {
+                const yearScores = allScores.filter(s => new Date(s.timestamp).getFullYear() === year);
+                
+                if (yearScores.length > 0) {
+                    const responses = yearScores
+                        .filter(s => s.responses && s.responses[selectedQuestion])
+                        .map(s => parseInt(s.responses[selectedQuestion]) || 0);
+                    
+                    if (responses.length > 0) {
+                        const average = (responses.reduce((a, b) => a + b, 0) / responses.length).toFixed(1);
+                        chartData[year] = {
+                            average: average,
+                            count: responses.length,
+                            min: Math.min(...responses),
+                            max: Math.max(...responses)
+                        };
+                    } else {
+                        chartData[year] = {
+                            average: 0,
+                            count: 0,
+                            min: 0,
+                            max: 0
+                        };
+                    }
+                }
+            });
+            
+            const years = Object.keys(chartData).map(y => parseInt(y)).sort();
+            const averages = years.map(y => chartData[y].average);
+            const minValues = years.map(y => chartData[y].min);
+            const maxValues = years.map(y => chartData[y].max);
+            
+            // Destroy existing chart if it exists
+            if (window.comparisonChartInstance) {
+                window.comparisonChartInstance.destroy();
+            }
+            
+            window.comparisonChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: years.map(y => `${y}`),
+                    datasets: [
+                        {
+                            label: 'Average Response',
+                            data: averages,
+                            backgroundColor: '#00DBC5',
+                            borderColor: '#0A354F',
+                            borderWidth: 2,
+                            borderRadius: 6,
+                            order: 1
+                        },
+                        {
+                            label: 'Lowest Response',
+                            data: minValues,
+                            backgroundColor: '#FFB74D',
+                            borderColor: '#FF9800',
+                            borderWidth: 2,
+                            borderRadius: 6,
+                            order: 2
+                        },
+                        {
+                            label: 'Highest Response',
+                            data: maxValues,
+                            backgroundColor: '#81C784',
+                            borderColor: '#4CAF50',
+                            borderWidth: 2,
+                            borderRadius: 6,
+                            order: 3
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        },
+                        title: {
+                            display: true,
+                            text: `Comparison: ${selectedQuestion}`,
+                            font: { size: 16, weight: 'bold' },
+                            color: '#333'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 10,
+                            title: {
+                                display: true,
+                                text: 'Response Value'
+                            }
+                        }
+                    }
+                }
+            });
         }
         
         function displayYearComparison() {
