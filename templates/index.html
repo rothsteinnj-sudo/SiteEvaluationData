@@ -1024,7 +1024,7 @@
             // Chart section
             if (selectedQuestion && selectedYears.length >= 2) {
                 html += '<div style="border-top: 2px solid #f0f0f0; padding: 20px; background: #f9f9f9;">';
-                html += '<div id="comparison-chart-container" style="background: white; padding: 20px; border-radius: 10px; width: 100%; height: 450px;"></div>';
+                html += '<div id="comparison-chart-container" style="background: white; padding: 20px; border-radius: 10px; width: 100%; min-height: 450px; display: flex; align-items: center; justify-content: center;"><div style="width: 100%; height: 100%;"></div></div>';
                 html += '</div>';
             } else if (selectedQuestion && selectedYears.length === 1) {
                 html += '<div style="border-top: 2px solid #f0f0f0; padding: 20px; background: #fff9e6; text-align: center;">';
@@ -1061,173 +1061,118 @@
             console.log('displayComparisonChart called:', { selectedQuestion, selectedYearsLength: selectedYears.length });
             
             if (!selectedQuestion || selectedYears.length < 2) {
-                console.warn('Cannot render chart: selectedQuestion=', selectedQuestion, 'selectedYears=', selectedYears);
+                console.warn('Cannot render chart: insufficient data');
                 return;
             }
             
-            const chartContainer = document.getElementById('comparison-chart-container');
-            if (!chartContainer) {
-                console.warn('Chart container element not found');
-                return;
-            }
-            
-            console.log('Chart container found, allScores length:', allScores.length);
-            
-            // Calculate category averages for selected years
-            const chartData = {};
-            
-            selectedYears.sort().forEach(year => {
-                const yearScores = allScores.filter(s => {
-                    try {
-                        // Handle format like "1/15/2026 13:07:19"
-                        const dateStr = s.timestamp.split(' ')[0];
-                        const yearFromDate = parseInt(dateStr.split('/')[2]);
-                        return yearFromDate === year;
-                    } catch (e) {
-                        console.warn('Date parse error:', s.timestamp, e);
-                        return false;
+            // Wait for container to be in DOM
+            setTimeout(() => {
+                const chartContainer = document.getElementById('comparison-chart-container');
+                if (!chartContainer) {
+                    console.warn('Chart container not found');
+                    return;
+                }
+                
+                console.log('Chart container found');
+                
+                // Calculate category averages for selected years
+                const chartData = {};
+                
+                selectedYears.sort().forEach(year => {
+                    const yearScores = allScores.filter(s => {
+                        try {
+                            const dateStr = s.timestamp.split(' ')[0];
+                            const yearFromDate = parseInt(dateStr.split('/')[2]);
+                            return yearFromDate === year;
+                        } catch (e) {
+                            return false;
+                        }
+                    });
+                    
+                    if (yearScores.length > 0) {
+                        const categoryScores = yearScores
+                            .filter(s => s.category_totals && s.category_totals[selectedQuestion] !== undefined)
+                            .map(s => s.category_totals[selectedQuestion]);
+                        
+                        if (categoryScores.length > 0) {
+                            const average = (categoryScores.reduce((a, b) => a + b, 0) / categoryScores.length).toFixed(1);
+                            chartData[year] = {
+                                average: parseFloat(average),
+                                count: categoryScores.length
+                            };
+                        }
                     }
                 });
-                console.log(`Scores for year ${year}:`, yearScores.length);
                 
-                if (yearScores.length > 0) {
-                    const categoryScores = yearScores
-                        .filter(s => s.category_totals && s.category_totals[selectedQuestion] !== undefined)
-                        .map(s => s.category_totals[selectedQuestion]);
-                    
-                    if (categoryScores.length > 0) {
-                        const average = (categoryScores.reduce((a, b) => a + b, 0) / categoryScores.length).toFixed(1);
-                        chartData[year] = {
-                            average: parseFloat(average),
-                            count: categoryScores.length
-                        };
-                    } else {
-                        chartData[year] = {
-                            average: 0,
-                            count: 0
-                        };
-                    }
+                const years = Object.keys(chartData).map(y => parseInt(y)).sort();
+                const averages = years.map(y => chartData[y].average);
+                const counts = years.map(y => chartData[y].count);
+                
+                // Add fake data for past years
+                for (let y = 2023; y < Math.min(...years); y++) {
+                    const variance = Math.random() * 15 - 7.5;
+                    const baseScore = averages.length > 0 ? averages[0] : 50;
+                    chartData[y] = {
+                        average: Math.max(0, Math.min(100, baseScore + variance)).toFixed(1),
+                        count: Math.floor(Math.random() * 10) + 15
+                    };
                 }
-            });
-            
-            const years = Object.keys(chartData).map(y => parseInt(y)).sort();
-            const averages = years.map(y => chartData[y].average);
-            const counts = years.map(y => chartData[y].count);
-            
-            console.log('Chart data ready:', { years, averages, counts });
-            
-            // Add fake data for past years (2023, 2024, 2025 if not already present)
-            const fakeYears = [];
-            for (let y = 2023; y < Math.min(...years); y++) {
-                fakeYears.push(y);
-            }
-            
-            // Generate realistic fake data for previous years
-            fakeYears.forEach(fakeYear => {
-                const variance = Math.random() * 15 - 7.5; // ±7.5 variation
-                const baseScore = averages.length > 0 ? averages[0] : 50;
-                chartData[fakeYear] = {
-                    average: Math.max(0, Math.min(100, baseScore + variance)).toFixed(1),
-                    count: Math.floor(Math.random() * 10) + 15 // 15-25 evaluations
-                };
-            });
-            
-            const allYears = Object.keys(chartData).map(y => parseInt(y)).sort();
-            const allAverages = allYears.map(y => parseFloat(chartData[y].average));
-            const allCounts = allYears.map(y => chartData[y].count);
-            
-            try {
-                // Clear container
-                chartContainer.innerHTML = '';
                 
-                const options = {
-                    chart: {
-                        type: 'bar',
-                        height: 400,
-                        toolbar: {
-                            show: true,
-                            tools: {
-                                download: true,
-                                selection: true,
-                                zoom: true,
-                                zoomin: true,
-                                zoomout: true,
-                                pan: true,
-                                reset: true
-                            }
-                        }
-                    },
-                    plotOptions: {
-                        bar: {
-                            horizontal: false,
-                            columnWidth: '55%',
-                            borderRadius: 8,
-                            dataLabels: {
-                                position: 'top'
-                            }
-                        }
-                    },
-                    dataLabels: {
-                        enabled: true,
-                        formatter: function(val) {
-                            return val.toFixed(1);
+                const allYears = Object.keys(chartData).map(y => parseInt(y)).sort();
+                const allAverages = allYears.map(y => parseFloat(chartData[y].average));
+                const allCounts = allYears.map(y => chartData[y].count);
+                
+                console.log('Final chart data:', { allYears, allAverages, allCounts });
+                
+                try {
+                    // Clear container first
+                    chartContainer.innerHTML = '';
+                    
+                    const options = {
+                        chart: {
+                            type: 'bar',
+                            height: 350
                         },
-                        offsetY: -20,
-                        style: {
-                            fontSize: '12px',
-                            colors: ['#333']
-                        }
-                    },
-                    stroke: {
-                        show: true,
-                        width: 2,
-                        colors: ['#333']
-                    },
-                    xaxis: {
-                        categories: allYears.map((y, i) => `${y}\n(n=${allCounts[i]})`),
-                        title: {
-                            text: 'Year'
-                        }
-                    },
-                    yaxis: {
-                        title: {
-                            text: 'Average Score'
-                        },
-                        min: 0,
-                        max: 100,
-                        tickAmount: 10
-                    },
-                    title: {
-                        text: `${selectedQuestion} - Yearly Average Comparison`,
-                        align: 'center',
-                        style: {
-                            fontSize: '16px',
-                            fontWeight: 'bold'
-                        }
-                    },
-                    tooltip: {
-                        y: {
-                            formatter: function(val) {
-                                return val.toFixed(1);
+                        plotOptions: {
+                            bar: {
+                                columnWidth: '60%',
+                                borderRadius: 5
                             }
-                        }
-                    },
-                    colors: ['#00DBC5']
-                };
-
-                const series = [
-                    {
-                        name: `${selectedQuestion} Average Score`,
+                        },
+                        dataLabels: {
+                            enabled: true
+                        },
+                        xaxis: {
+                            categories: allYears.map((y, i) => `${y}`)
+                        },
+                        yaxis: {
+                            title: { text: 'Average Score' },
+                            min: 0,
+                            max: 100
+                        },
+                        title: {
+                            text: `${selectedQuestion} - Yearly Average`,
+                            align: 'center'
+                        },
+                        colors: ['#00DBC5']
+                    };
+                    
+                    const series = [{
+                        name: 'Average Score',
                         data: allAverages
-                    }
-                ];
-
-                const chart = new ApexCharts(chartContainer, { ...options, series });
-                chart.render();
-                console.log('ApexCharts rendered successfully');
-            } catch (error) {
-                console.error('Error creating chart:', error);
-            }
+                    }];
+                    
+                    const chart = new ApexCharts(chartContainer, { 
+                        ...options, 
+                        series 
+                    });
+                    chart.render();
+                    console.log('Chart rendered successfully');
+                } catch (error) {
+                    console.error('Error rendering chart:', error);
+                    chartContainer.innerHTML = `<p style="color: red; padding: 20px;">Error rendering chart: ${error.message}</p>`;
+                }
+            }, 200);
         }
         
         function displayYearComparison() {
