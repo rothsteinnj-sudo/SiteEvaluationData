@@ -583,9 +583,7 @@
             gap: 20px;
         }
     </style>
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/recharts@2.12.7/dist/Recharts.js"></script>
+    <script crossorigin src="https://cdn.jsdelivr.net/npm/apexcharts@3.45.0/dist/apexcharts.min.js"></script>
 </head>
 <body>
     <div class="container">
@@ -1135,60 +1133,101 @@
             });
             
             const allYears = Object.keys(chartData).map(y => parseInt(y)).sort();
-            const chartDataArray = allYears.map(y => ({
-                year: y.toString(),
-                score: parseFloat(chartData[y].average),
-                count: chartData[y].count
-            }));
+            const allAverages = allYears.map(y => parseFloat(chartData[y].average));
+            const allCounts = allYears.map(y => chartData[y].count);
             
-            // Render Recharts Bar Chart using React
-            const {
-                BarChart,
-                Bar,
-                XAxis,
-                YAxis,
-                CartesianGrid,
-                Tooltip,
-                Legend,
-                ResponsiveContainer
-            } = window.Recharts;
-            
-            const chartElement = React.createElement(
-                ResponsiveContainer,
-                { width: '100%', height: 400 },
-                React.createElement(
-                    BarChart,
-                    { data: chartDataArray, margin: { top: 20, right: 30, left: 0, bottom: 20 } },
-                    React.createElement(CartesianGrid, { strokeDasharray: '3 3' }),
-                    React.createElement(XAxis, { 
-                        dataKey: 'year',
-                        label: { value: 'Year', position: 'insideBottomRight', offset: -10 }
-                    }),
-                    React.createElement(YAxis, { 
-                        domain: [0, 100],
-                        label: { value: 'Average Score', angle: -90, position: 'insideLeft' }
-                    }),
-                    React.createElement(Tooltip, { 
-                        formatter: (value, name) => {
-                            if (name === 'score') return value.toFixed(1);
-                            return value;
+            try {
+                // Clear container
+                chartContainer.innerHTML = '';
+                
+                const options = {
+                    chart: {
+                        type: 'bar',
+                        height: 400,
+                        toolbar: {
+                            show: true,
+                            tools: {
+                                download: true,
+                                selection: true,
+                                zoom: true,
+                                zoomin: true,
+                                zoomout: true,
+                                pan: true,
+                                reset: true
+                            }
+                        }
+                    },
+                    plotOptions: {
+                        bar: {
+                            horizontal: false,
+                            columnWidth: '55%',
+                            borderRadius: 8,
+                            dataLabels: {
+                                position: 'top'
+                            }
+                        }
+                    },
+                    dataLabels: {
+                        enabled: true,
+                        formatter: function(val) {
+                            return val.toFixed(1);
                         },
-                        labelFormatter: (label) => `Year: ${label}`
-                    }),
-                    React.createElement(Legend, {}),
-                    React.createElement(Bar, { 
-                        dataKey: 'score',
-                        fill: '#00DBC5',
+                        offsetY: -20,
+                        style: {
+                            fontSize: '12px',
+                            colors: ['#333']
+                        }
+                    },
+                    stroke: {
+                        show: true,
+                        width: 2,
+                        colors: ['#333']
+                    },
+                    xaxis: {
+                        categories: allYears.map((y, i) => `${y}\n(n=${allCounts[i]})`),
+                        title: {
+                            text: 'Year'
+                        }
+                    },
+                    yaxis: {
+                        title: {
+                            text: 'Average Score'
+                        },
+                        min: 0,
+                        max: 100,
+                        tickAmount: 10
+                    },
+                    title: {
+                        text: `${selectedQuestion} - Yearly Average Comparison`,
+                        align: 'center',
+                        style: {
+                            fontSize: '16px',
+                            fontWeight: 'bold'
+                        }
+                    },
+                    tooltip: {
+                        y: {
+                            formatter: function(val) {
+                                return val.toFixed(1);
+                            }
+                        }
+                    },
+                    colors: ['#00DBC5']
+                };
+
+                const series = [
+                    {
                         name: `${selectedQuestion} Average Score`,
-                        radius: [8, 8, 0, 0]
-                    })
-                )
-            );
-            
-            const root = ReactDOM.createRoot(chartContainer);
-            root.render(chartElement);
-            
-            console.log('Recharts rendered successfully');
+                        data: allAverages
+                    }
+                ];
+
+                const chart = new ApexCharts(chartContainer, { ...options, series });
+                chart.render();
+                console.log('ApexCharts rendered successfully');
+            } catch (error) {
+                console.error('Error creating chart:', error);
+            }
         }
         
         function displayYearComparison() {
