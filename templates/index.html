@@ -1068,84 +1068,92 @@
             console.log('Canvas found, Chart available:', typeof Chart !== 'undefined');
             console.log('allScores length:', allScores.length);
             
-            // Calculate category averages for selected years
-            const chartData = {};
+            // Calculate category averages for real data
+            const realDataByYear = {};
             
-            selectedYears.sort().forEach(year => {
-                const yearScores = allScores.filter(s => {
-                    try {
-                        const dateStr = s.timestamp.split(' ')[0];
-                        const yearFromDate = parseInt(dateStr.split('/')[2]);
-                        return yearFromDate === year;
-                    } catch (e) {
-                        console.warn('Date parse error:', s.timestamp, e);
-                        return false;
-                    }
-                });
-                console.log(`Scores for year ${year}:`, yearScores.length);
-                
-                if (yearScores.length > 0) {
-                    const categoryScores = yearScores
-                        .filter(s => s.category_totals && s.category_totals[selectedQuestion] !== undefined)
-                        .map(s => s.category_totals[selectedQuestion]);
+            allScores.forEach(score => {
+                try {
+                    const dateStr = score.timestamp.split(' ')[0];
+                    const year = parseInt(dateStr.split('/')[2]);
                     
-                    if (categoryScores.length > 0) {
-                        const average = (categoryScores.reduce((a, b) => a + b, 0) / categoryScores.length).toFixed(1);
-                        chartData[year] = {
-                            average: parseFloat(average),
-                            count: categoryScores.length
-                        };
-                    } else {
-                        chartData[year] = {
-                            average: 0,
-                            count: 0
-                        };
+                    if (score.category_totals && score.category_totals[selectedQuestion] !== undefined) {
+                        if (!realDataByYear[year]) {
+                            realDataByYear[year] = [];
+                        }
+                        realDataByYear[year].push(score.category_totals[selectedQuestion]);
                     }
+                } catch (e) {
+                    console.warn('Error processing score:', e);
                 }
             });
             
-            const years = Object.keys(chartData).map(y => parseInt(y)).sort();
-            console.log('Years with data:', years);
+            console.log('Real data by year:', realDataByYear);
             
-            if (years.length === 0) {
-                console.warn('No years with data found');
+            // Calculate averages for real data
+            const chartData = {};
+            Object.keys(realDataByYear).forEach(year => {
+                const scores = realDataByYear[year];
+                if (scores.length > 0) {
+                    const average = (scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(1);
+                    chartData[year] = {
+                        average: parseFloat(average),
+                        count: scores.length,
+                        isReal: true
+                    };
+                }
+            });
+            
+            console.log('Real chart data:', chartData);
+            
+            // For selected years without data, generate realistic fake data
+            selectedYears.forEach(year => {
+                if (!chartData[year]) {
+                    // Generate fake data based on available real data
+                    const realAverages = Object.values(chartData)
+                        .filter(d => d.isReal)
+                        .map(d => d.average);
+                    
+                    let baseScore = 50;
+                    if (realAverages.length > 0) {
+                        baseScore = realAverages.reduce((a, b) => a + b, 0) / realAverages.length;
+                    }
+                    
+                    // Add realistic variation: older years slightly lower, newer years might be higher
+                    const yearOffset = year - 2026;
+                    const trendAdjustment = yearOffset * 2; // 2 points per year trend
+                    const randomVariance = (Math.random() * 20 - 10); // ±10 random variation
+                    const fakeScore = Math.max(0, Math.min(100, baseScore + trendAdjustment + randomVariance));
+                    
+                    chartData[year] = {
+                        average: parseFloat(fakeScore.toFixed(1)),
+                        count: Math.floor(Math.random() * 8) + 12, // 12-20 evaluations
+                        isReal: false
+                    };
+                }
+            });
+            
+            console.log('Final chart data with fake data:', chartData);
+            
+            // Sort years and prepare data
+            const allYears = Object.keys(chartData)
+                .map(y => parseInt(y))
+                .sort();
+            
+            if (allYears.length === 0) {
+                console.warn('No data available for selected years');
                 return;
             }
             
-            const averages = years.map(y => chartData[y].average);
-            const counts = years.map(y => chartData[y].count);
+            const allAverages = allYears.map(y => chartData[y].average);
+            const allCounts = allYears.map(y => chartData[y].count);
             
-            console.log('Chart data ready:', { years, averages, counts });
+            console.log('Final data:', { allYears, allAverages, allCounts });
             
             // Destroy existing chart if it exists
             if (window.comparisonChartInstance) {
                 window.comparisonChartInstance.destroy();
                 window.comparisonChartInstance = null;
             }
-            
-            // Add fake data for past years (only if we have real data to base it on)
-            const minYear = Math.min(...years);
-            console.log('Min year:', minYear);
-            
-            const fakeYears = [];
-            for (let y = 2023; y < minYear; y++) {
-                fakeYears.push(y);
-            }
-            
-            console.log('Fake years to add:', fakeYears);
-            
-            fakeYears.forEach(fakeYear => {
-                const variance = Math.random() * 15 - 7.5;
-                const baseScore = averages.length > 0 ? averages[0] : 50;
-                chartData[fakeYear] = {
-                    average: Math.max(0, Math.min(100, baseScore + variance)).toFixed(1),
-                    count: Math.floor(Math.random() * 10) + 15
-                };
-            });
-            
-            const allYears = Object.keys(chartData).map(y => parseInt(y)).sort();
-            const allAverages = allYears.map(y => parseFloat(chartData[y].average));
-            const allCounts = allYears.map(y => chartData[y].count);
             
             const colors = ['#00DBC5', '#667eea', '#FF9800', '#81C784', '#FF6B6B', '#FFD93D'];
             
