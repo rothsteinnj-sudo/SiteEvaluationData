@@ -760,8 +760,10 @@
             // Filter scores for current year (2026)
             const currentYear = new Date().getFullYear();
             const currentYearScores = scores.filter(score => {
-                const scoreYear = new Date(score.timestamp).getFullYear();
-                return scoreYear === currentYear;
+                // Parse timestamp in MM/DD/YYYY format
+                const dateStr = score.timestamp.split(' ')[0]; // Get "MM/DD/YYYY" part
+                const year = parseInt(dateStr.split('/')[2]); // Extract year
+                return year === currentYear;
             });
             
             if (currentYearScores.length === 0) {
