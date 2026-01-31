@@ -1157,20 +1157,27 @@
             
             const colors = ['#00DBC5', '#667eea', '#FF9800', '#81C784', '#FF6B6B', '#FFD93D'];
             
+            // Calculate dynamic Y-axis max (scale to data with 10% padding)
+            const maxValue = Math.max(...allAverages);
+            const yAxisMax = Math.ceil((maxValue * 1.1) / 10) * 10; // Round up to nearest 10
+            
             try {
                 window.comparisonChartInstance = new Chart(ctx, {
                     type: 'bar',
                     data: {
-                        labels: allYears.map((y, i) => `${y} (n=${allCounts[i]})`),
+                        labels: allYears.map((y, i) => `${y}\n(n=${allCounts[i]})`),
                         datasets: [
                             {
                                 label: `${selectedQuestion} Average Score`,
                                 data: allAverages,
                                 backgroundColor: allAverages.map((_, i) => colors[i % colors.length]),
                                 borderColor: '#333',
-                                borderWidth: 2,
-                                borderRadius: 8,
-                                maxBarThickness: 60
+                                borderWidth: 1.5,
+                                borderRadius: 6,
+                                borderSkipped: false,
+                                maxBarThickness: 80,
+                                barPercentage: 0.7,
+                                categoryPercentage: 0.8
                             }
                         ]
                     },
@@ -1181,27 +1188,88 @@
                         plugins: {
                             legend: {
                                 display: true,
-                                position: 'top'
+                                position: 'top',
+                                labels: {
+                                    font: { size: 12, weight: '600' },
+                                    padding: 15,
+                                    usePointStyle: true,
+                                    pointStyle: 'circle'
+                                }
+                            },
+                            tooltip: {
+                                enabled: true,
+                                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                padding: 12,
+                                titleFont: { size: 13, weight: 'bold' },
+                                bodyFont: { size: 12 },
+                                displayColors: true,
+                                cornerRadius: 6,
+                                callbacks: {
+                                    title: function(context) {
+                                        return context[0].label.split('\n')[0]; // Just the year
+                                    },
+                                    label: function(context) {
+                                        const year = allYears[context.dataIndex];
+                                        const isReal = chartData[year].isReal;
+                                        const dataType = isReal ? 'Real Data' : 'Projected Data';
+                                        return `Score: ${context.parsed.y.toFixed(1)} • ${dataType}`;
+                                    },
+                                    afterLabel: function(context) {
+                                        const year = allYears[context.dataIndex];
+                                        return `Sample Size: n=${chartData[year].count}`;
+                                    }
+                                }
                             },
                             title: {
                                 display: true,
                                 text: `${selectedQuestion} - Yearly Average Comparison`,
-                                font: { size: 16, weight: 'bold' }
+                                font: { size: 16, weight: 'bold' },
+                                padding: { top: 10, bottom: 20 },
+                                color: '#333'
                             }
                         },
                         scales: {
                             y: {
                                 beginAtZero: true,
-                                max: 100,
+                                max: yAxisMax,
+                                ticks: {
+                                    stepSize: Math.max(10, Math.ceil(yAxisMax / 10)),
+                                    callback: function(value) {
+                                        return value.toFixed(0);
+                                    },
+                                    font: { size: 11, weight: '600' },
+                                    color: '#666'
+                                },
+                                grid: {
+                                    drawBorder: true,
+                                    color: 'rgba(0, 0, 0, 0.08)',
+                                    drawTicks: false,
+                                    lineWidth: 1
+                                },
                                 title: {
                                     display: true,
-                                    text: 'Average Score'
+                                    text: 'Average Score (0-100)',
+                                    font: { size: 13, weight: 'bold' },
+                                    color: '#333',
+                                    padding: 10
                                 }
                             },
                             x: {
+                                grid: {
+                                    display: false,
+                                    drawBorder: false
+                                },
+                                ticks: {
+                                    font: { size: 11, weight: '600' },
+                                    color: '#666',
+                                    padding: 8
+                                },
                                 title: {
                                     display: true,
-                                    text: 'Year'
+                                    text: 'Year',
+                                    font: { size: 13, weight: 'bold' },
+                                    color: '#333',
+                                    padding: 10
                                 }
                             }
                         }
