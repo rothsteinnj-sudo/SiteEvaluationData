@@ -965,49 +965,81 @@
         let selectedQuestion = null;
         
         function displayQuestionSelection() {
-            // Get all unique categories from scores
-            const categories = new Set();
+            if (selectedYears.length === 0) {
+                return '<p style="color: #999; margin-top: 20px;">Select one or more years to see available questions.</p>';
+            }
+            
+            // Get all unique items from scores - create a question bank from items in categories
+            const itemsMap = {};
             allScores.forEach(score => {
                 if (score.category_scores) {
-                    Object.keys(score.category_scores).forEach(cat => {
-                        categories.add(cat);
+                    Object.keys(score.category_scores).forEach(category => {
+                        if (!itemsMap[category]) {
+                            itemsMap[category] = new Set();
+                        }
                     });
                 }
             });
             
-            const sortedCategories = Array.from(categories).sort();
+            // For simplicity, we'll use categories as questions
+            const categories = Object.keys(itemsMap).sort();
             
-            if (sortedCategories.length === 0) {
-                return '<p style="color: #999; margin-top: 20px;">No categories found in the data.</p>';
+            if (categories.length === 0) {
+                return '<p style="color: #999; margin-top: 20px;">No data available.</p>';
             }
             
-            let html = '<div style="margin-top: 30px; background: #f0f8f7; padding: 20px; border-radius: 10px;">';
-            html += '<h3 style="color: #00DBC5; margin-bottom: 15px;">📊 Select a Category to Compare</h3>';
-            html += '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px;">';
+            let html = '<div style="margin-top: 30px; background: white; border-radius: 10px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); padding: 0; overflow: hidden;">';
             
-            sortedCategories.forEach(category => {
+            // Header
+            html += '<div style="background: linear-gradient(135deg, #0A354F 0%, #00DBC5 100%); color: white; padding: 20px; text-align: center;">';
+            html += '<h2 style="margin: 0; font-size: 20px;">📋 Select Question/Item</h2>';
+            html += '<p style="margin: 5px 0 0 0; opacity: 0.9; font-size: 14px;">Clinical Research Institute Question Selector</p>';
+            html += '</div>';
+            
+            // Content
+            html += '<div style="padding: 20px;">';
+            
+            // Expandable categories with items
+            categories.forEach(category => {
                 const isSelected = selectedQuestion === category;
-                const bgColor = isSelected ? '#00DBC5' : '#ffffff';
-                const textColor = isSelected ? '#ffffff' : '#333';
-                
-                html += `<div onclick="selectQuestion('${category.replace(/'/g, "\\'")}'); displayYearlyAverages();" style="padding: 12px; border: 2px solid ${isSelected ? '#00DBC5' : '#ddd'}; border-radius: 8px; cursor: pointer; background: ${bgColor}; color: ${textColor}; transition: all 0.2s; font-weight: ${isSelected ? '600' : '500'}; text-align: center;">
-                    ${category}
-                </div>`;
+                const itemContent = `
+                    <div class="category-section" style="margin-bottom: 10px;">
+                        <div class="category-header" onclick="selectQuestion('${category.replace(/'/g, "\\'")}'); displayYearlyAverages();" style="background: ${isSelected ? '#e8f9f7' : '#f9f9f9'}; border-left-color: ${isSelected ? '#00DBC5' : '#ddd'}; cursor: pointer;">
+                            <div class="category-title" style="color: ${isSelected ? '#00DBC5' : '#333'};">
+                                <span class="category-toggle" style="color: ${isSelected ? '#00DBC5' : '#666'};">▶</span>
+                                ${category}
+                            </div>
+                            <span style="padding: 4px 12px; border-radius: 20px; background: ${isSelected ? '#00DBC5' : '#ddd'}; color: ${isSelected ? 'white' : '#333'}; font-size: 12px; font-weight: 600;">
+                                ${isSelected ? '✓ Selected' : 'Click to select'}
+                            </span>
+                        </div>
+                        <div class="category-items ${isSelected ? 'show' : ''}" style="display: ${isSelected ? 'block' : 'none'}; background: #f9f9f9; padding: 10px 15px; border-left: 4px solid #00DBC5; margin-left: 5px;">
+                            <p style="color: #666; font-size: 13px; margin: 0; font-style: italic;">Click category name to compare this category across selected years</p>
+                        </div>
+                    </div>
+                `;
+                html += itemContent;
             });
             
             html += '</div>';
             
-            // Show chart if question is selected and years are selected
-            if (selectedQuestion && selectedYears.length > 0) {
-                html += `<div id="comparison-chart-container" style="margin-top: 30px; background: white; padding: 20px; border-radius: 10px;">
-                    <canvas id="comparisonChart" style="max-height: 400px;"></canvas>
-                </div>`;
+            // Chart section
+            if (selectedQuestion && selectedYears.length >= 2) {
+                html += '<div style="border-top: 2px solid #f0f0f0; padding: 20px; background: #f9f9f9;">';
+                html += '<div id="comparison-chart-container" style="background: white; padding: 20px; border-radius: 10px;">';
+                html += '<canvas id="comparisonChart" style="max-height: 400px;"></canvas>';
+                html += '</div>';
+                html += '</div>';
+            } else if (selectedQuestion && selectedYears.length === 1) {
+                html += '<div style="border-top: 2px solid #f0f0f0; padding: 20px; background: #fff9e6; text-align: center;">';
+                html += '<p style="color: #FF9800; font-weight: 600;">Select 2 or more years to generate comparison chart</p>';
+                html += '</div>';
             }
             
             html += '</div>';
             
             setTimeout(() => {
-                if (selectedQuestion && selectedYears.length > 0 && document.getElementById('comparisonChart')) {
+                if (selectedQuestion && selectedYears.length >= 2 && document.getElementById('comparisonChart')) {
                     displayComparisonChart();
                 }
             }, 100);
@@ -1020,7 +1052,7 @@
         }
         
         function displayComparisonChart() {
-            if (!selectedQuestion || selectedYears.length === 0) return;
+            if (!selectedQuestion || selectedYears.length < 2) return;
             
             const ctx = document.getElementById('comparisonChart');
             if (!ctx) return;
@@ -1028,7 +1060,7 @@
             // Calculate category averages for selected years
             const chartData = {};
             
-            selectedYears.forEach(year => {
+            selectedYears.sort().forEach(year => {
                 const yearScores = allScores.filter(s => new Date(s.timestamp).getFullYear() === year);
                 
                 if (yearScores.length > 0) {
@@ -1053,6 +1085,7 @@
             
             const years = Object.keys(chartData).map(y => parseInt(y)).sort();
             const averages = years.map(y => chartData[y].average);
+            const counts = years.map(y => chartData[y].count);
             
             // Destroy existing chart if it exists
             if (window.comparisonChartInstance) {
@@ -1064,7 +1097,7 @@
             window.comparisonChartInstance = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: years.map(y => `${y}`),
+                    labels: years.map((y, i) => `${y}\n(n=${counts[i]})`),
                     datasets: [
                         {
                             label: `${selectedQuestion} Average Score`,
@@ -1073,7 +1106,7 @@
                             borderColor: '#333',
                             borderWidth: 2,
                             borderRadius: 8,
-                            maxBarThickness: 60
+                            maxBarThickness: 80
                         }
                     ]
                 },
@@ -1091,8 +1124,8 @@
                         },
                         title: {
                             display: true,
-                            text: `${selectedQuestion} - Yearly Comparison`,
-                            font: { size: 16, weight: 'bold' },
+                            text: `${selectedQuestion} - Yearly Average Comparison`,
+                            font: { size: 14, weight: 'bold' },
                             color: '#333',
                             padding: 15
                         }
