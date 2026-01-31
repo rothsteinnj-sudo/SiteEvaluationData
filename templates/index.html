@@ -583,7 +583,9 @@
             gap: 20px;
         }
     </style>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/recharts@2.12.7/dist/Recharts.js"></script>
 </head>
 <body>
     <div class="container">
@@ -1024,9 +1026,7 @@
             // Chart section
             if (selectedQuestion && selectedYears.length >= 2) {
                 html += '<div style="border-top: 2px solid #f0f0f0; padding: 20px; background: #f9f9f9;">';
-                html += '<div id="comparison-chart-container" style="background: white; padding: 20px; border-radius: 10px;">';
-                html += '<canvas id="comparisonChart" style="max-height: 400px;"></canvas>';
-                html += '</div>';
+                html += '<div id="comparison-chart-container" style="background: white; padding: 20px; border-radius: 10px; width: 100%; height: 450px;"></div>';
                 html += '</div>';
             } else if (selectedQuestion && selectedYears.length === 1) {
                 html += '<div style="border-top: 2px solid #f0f0f0; padding: 20px; background: #fff9e6; text-align: center;">';
@@ -1067,13 +1067,13 @@
                 return;
             }
             
-            const ctx = document.getElementById('comparisonChart');
-            if (!ctx) {
-                console.warn('Canvas element not found');
+            const chartContainer = document.getElementById('comparison-chart-container');
+            if (!chartContainer) {
+                console.warn('Chart container element not found');
                 return;
             }
             
-            console.log('Canvas found, allScores length:', allScores.length);
+            console.log('Chart container found, allScores length:', allScores.length);
             
             // Calculate category averages for selected years
             const chartData = {};
@@ -1118,14 +1118,7 @@
             
             console.log('Chart data ready:', { years, averages, counts });
             
-            // Destroy existing chart if it exists
-            if (window.comparisonChartInstance) {
-                window.comparisonChartInstance.destroy();
-                window.comparisonChartInstance = null;
-            }
-            
             // Add fake data for past years (2023, 2024, 2025 if not already present)
-            const yearSet = new Set(years);
             const fakeYears = [];
             for (let y = 2023; y < Math.min(...years); y++) {
                 fakeYears.push(y);
@@ -1142,75 +1135,60 @@
             });
             
             const allYears = Object.keys(chartData).map(y => parseInt(y)).sort();
-            const allAverages = allYears.map(y => parseFloat(chartData[y].average));
-            const allCounts = allYears.map(y => chartData[y].count);
+            const chartDataArray = allYears.map(y => ({
+                year: y.toString(),
+                score: parseFloat(chartData[y].average),
+                count: chartData[y].count
+            }));
             
-            const colors = ['#00DBC5', '#667eea', '#FF9800', '#81C784', '#FF6B6B', '#FFD93D'];
+            // Render Recharts Bar Chart using React
+            const {
+                BarChart,
+                Bar,
+                XAxis,
+                YAxis,
+                CartesianGrid,
+                Tooltip,
+                Legend,
+                ResponsiveContainer
+            } = window.Recharts;
             
-            try {
-                window.comparisonChartInstance = new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: allYears.map((y, i) => `${y} (n=${allCounts[i]})`),
-                        datasets: [
-                            {
-                                label: `${selectedQuestion} Average Score`,
-                                data: allAverages,
-                                backgroundColor: allAverages.map((_, i) => colors[i % colors.length]),
-                                borderColor: '#333',
-                                borderWidth: 2,
-                                borderRadius: 8,
-                                maxBarThickness: 60
-                            }
-                        ]
-                    },
-                    options: {
-                        indexAxis: 'x',
-                        responsive: true,
-                        maintainAspectRatio: true,
-                        plugins: {
-                            legend: {
-                                display: true,
-                                position: 'top',
-                                labels: {
-                                    font: { size: 12, weight: 'bold' }
-                                }
-                            },
-                            title: {
-                                display: true,
-                                text: `${selectedQuestion} - Yearly Average Comparison`,
-                                font: { size: 14, weight: 'bold' },
-                                color: '#333',
-                                padding: 15
-                            }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            max: 100,
-                            ticks: {
-                                stepSize: 10
-                            },
-                            title: {
-                                display: true,
-                                text: 'Average Score',
-                                font: { weight: 'bold' }
-                            }
+            const chartElement = React.createElement(
+                ResponsiveContainer,
+                { width: '100%', height: 400 },
+                React.createElement(
+                    BarChart,
+                    { data: chartDataArray, margin: { top: 20, right: 30, left: 0, bottom: 20 } },
+                    React.createElement(CartesianGrid, { strokeDasharray: '3 3' }),
+                    React.createElement(XAxis, { 
+                        dataKey: 'year',
+                        label: { value: 'Year', position: 'insideBottomRight', offset: -10 }
+                    }),
+                    React.createElement(YAxis, { 
+                        domain: [0, 100],
+                        label: { value: 'Average Score', angle: -90, position: 'insideLeft' }
+                    }),
+                    React.createElement(Tooltip, { 
+                        formatter: (value, name) => {
+                            if (name === 'score') return value.toFixed(1);
+                            return value;
                         },
-                        x: {
-                            title: {
-                                display: true,
-                                text: 'Year',
-                                font: { weight: 'bold' }
-                            }
-                        }
-                    }
-                }
-                });
-                console.log('Chart created successfully');
-            } catch (error) {
-                console.error('Error creating chart:', error);
-            }
+                        labelFormatter: (label) => `Year: ${label}`
+                    }),
+                    React.createElement(Legend, {}),
+                    React.createElement(Bar, { 
+                        dataKey: 'score',
+                        fill: '#00DBC5',
+                        name: `${selectedQuestion} Average Score`,
+                        radius: [8, 8, 0, 0]
+                    })
+                )
+            );
+            
+            const root = ReactDOM.createRoot(chartContainer);
+            root.render(chartElement);
+            
+            console.log('Recharts rendered successfully');
         }
         
         function displayYearComparison() {
