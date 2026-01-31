@@ -969,20 +969,18 @@
                 return '<p style="color: #999; margin-top: 20px;">Select one or more years to see available questions.</p>';
             }
             
-            // Get all unique items from scores - create a question bank from items in categories
-            const itemsMap = {};
+            // Get all unique categories from scores
+            const categoriesSet = new Set();
             allScores.forEach(score => {
-                if (score.category_scores) {
-                    Object.keys(score.category_scores).forEach(category => {
-                        if (!itemsMap[category]) {
-                            itemsMap[category] = new Set();
-                        }
+                if (score.category_totals) {
+                    Object.keys(score.category_totals).forEach(category => {
+                        categoriesSet.add(category);
                     });
                 }
             });
             
-            // For simplicity, we'll use categories as questions
-            const categories = Object.keys(itemsMap).sort();
+            // Use categories as questions
+            const categories = Array.from(categoriesSet).sort();
             
             if (categories.length === 0) {
                 return '<p style="color: #999; margin-top: 20px;">No data available.</p>';
@@ -1086,8 +1084,8 @@
                 
                 if (yearScores.length > 0) {
                     const categoryScores = yearScores
-                        .filter(s => s.category_scores && s.category_scores[selectedQuestion] !== undefined)
-                        .map(s => s.category_scores[selectedQuestion]);
+                        .filter(s => s.category_totals && s.category_totals[selectedQuestion] !== undefined)
+                        .map(s => s.category_totals[selectedQuestion]);
                     
                     if (categoryScores.length > 0) {
                         const average = (categoryScores.reduce((a, b) => a + b, 0) / categoryScores.length).toFixed(1);
