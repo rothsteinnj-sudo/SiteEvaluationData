@@ -969,17 +969,47 @@
                 return '<p style="color: #999; margin-top: 20px;">Select one or more years to see available questions.</p>';
             }
             
-            // Get all unique categories from scores
+            // Extract ALL questions/items across all years
+            const itemsMap = {}; // category -> [{item, value, points, link}, ...]
             const categoriesSet = new Set();
+            
             allScores.forEach(score => {
+                // Add category-level totals
                 if (score.category_totals) {
                     Object.keys(score.category_totals).forEach(category => {
                         categoriesSet.add(category);
+                        if (!itemsMap[category]) {
+                            itemsMap[category] = [];
+                        }
+                    });
+                }
+                
+                // Add individual items from items array
+                if (score.items) {
+                    Object.keys(score.items).forEach(category => {
+                        categoriesSet.add(category);
+                        if (!itemsMap[category]) {
+                            itemsMap[category] = [];
+                        }
+                        // score.items[category] is an array of items
+                        if (Array.isArray(score.items[category])) {
+                            score.items[category].forEach(item => {
+                                // Check if this item already exists in our map
+                                const exists = itemsMap[category].some(i => i.item === item.item);
+                                if (!exists) {
+                                    itemsMap[category].push({
+                                        item: item.item,
+                                        value: item.value,
+                                        points: item.points,
+                                        link: item.link || null
+                                    });
+                                }
+                            });
+                        }
                     });
                 }
             });
             
-            // Use categories as questions
             const categories = Array.from(categoriesSet).sort();
             
             if (categories.length === 0) {
@@ -997,26 +1027,61 @@
             // Content
             html += '<div style="padding: 20px;">';
             
-            // Expandable categories with items
+            // Expandable categories with detailed items
             categories.forEach(category => {
                 const isSelected = selectedQuestion === category;
-                const itemContent = `
-                    <div class="category-section" style="margin-bottom: 10px;">
-                        <div class="category-header" onclick="selectQuestion('${category.replace(/'/g, "\\'")}'); displayYearlyAverages();" style="background: ${isSelected ? '#e8f9f7' : '#f9f9f9'}; border-left-color: ${isSelected ? '#00DBC5' : '#ddd'}; cursor: pointer;">
-                            <div class="category-title" style="color: ${isSelected ? '#00DBC5' : '#333'};">
-                                <span class="category-toggle" style="color: ${isSelected ? '#00DBC5' : '#666'};">▶</span>
-                                ${category}
+                const categoryItems = itemsMap[category] || [];
+                
+                // Create category section
+                let categoryHtml = `
+                    <div class="category-section" style="margin-bottom: 15px; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
+                        <div class="category-header" onclick="selectQuestion('${category.replace(/'/g, "\\'")}'); displayYearlyAverages();" style="background: ${isSelected ? '#e8f9f7' : '#f9f9f9'}; border-left: 4px solid ${isSelected ? '#00DBC5' : '#ddd'}; padding: 15px; cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <span class="category-toggle" style="color: ${isSelected ? '#00DBC5' : '#666'}; font-size: 12px;">▼</span>
+                                <div class="category-title" style="color: ${isSelected ? '#00DBC5' : '#333'}; font-weight: 600; font-size: 15px;">
+                                    ${category}
+                                </div>
+                                <span style="font-size: 12px; color: #999;">(${categoryItems.length} items)</span>
                             </div>
                             <span style="padding: 4px 12px; border-radius: 20px; background: ${isSelected ? '#00DBC5' : '#ddd'}; color: ${isSelected ? 'white' : '#333'}; font-size: 12px; font-weight: 600;">
-                                ${isSelected ? '✓ Selected' : 'Click to select'}
+                                ${isSelected ? '✓ Category' : 'Click'}
                             </span>
                         </div>
-                        <div class="category-items ${isSelected ? 'show' : ''}" style="display: ${isSelected ? 'block' : 'none'}; background: #f9f9f9; padding: 10px 15px; border-left: 4px solid #00DBC5; margin-left: 5px;">
-                            <p style="color: #666; font-size: 13px; margin: 0; font-style: italic;">Click category name to compare this category across selected years</p>
-                        </div>
-                    </div>
+                        <div class="category-items ${isSelected ? 'show' : ''}" style="display: ${isSelected ? 'block' : 'none'}; background: #f9f9f9; padding: 0; border-top: 1px solid #e0e0e0;">
                 `;
-                html += itemContent;
+                
+                // Add individual items
+                categoryItems.forEach((item, idx) => {
+                    const itemKey = \`\${category}::\${item.item}\`;
+                    const isItemSelected = selectedQuestion === itemKey;
+                    const hasLink = item.link && item.link.url;
+                    
+                    categoryHtml += \`
+                        <div class="item-row" onclick="selectQuestion('\${itemKey.replace(/'/g, "\\\\'")}'); displayYearlyAverages();" style="padding: 12px 15px; border-bottom: 1px solid #e0e0e0; background: \${isItemSelected ? '#fff9e6' : 'transparent'}; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: background 0.2s;">
+                            <div style="flex: 1;">
+                                <div style="font-size: 14px; color: #333; font-weight: 500;">
+                                    📌 \${item.item}
+                                </div>
+                                <div style="font-size: 12px; color: #999; margin-top: 3px;">
+                                    \${item.value ? 'Answer: ' + item.value : 'N/A'}
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 8px; align-items: center;">
+                                \${hasLink ? \`
+                                    <button onclick="event.stopPropagation(); window.open('\${item.link.url}', '_blank');" style="padding: 6px 10px; background: #FF9800; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600;">
+                                        📄 \${item.link.name || 'PDF'}
+                                    </button>
+                                \` : ''}
+                                <span style="padding: 3px 8px; border-radius: 12px; background: \${isItemSelected ? '#FF9800' : '#ddd'}; color: \${isItemSelected ? 'white' : '#333'}; font-size: 11px; font-weight: 600;">
+                                    \${isItemSelected ? '✓ Item' : 'Select'}
+                                </span>
+                            </div>
+                        </div>
+                    \`;
+                });
+                
+                categoryHtml += '</div></div>';
+                html += categoryHtml;
             });
             
             html += '</div>';
@@ -1068,7 +1133,18 @@
             console.log('Canvas found, Chart available:', typeof Chart !== 'undefined');
             console.log('allScores length:', allScores.length);
             
-            // Calculate category averages for real data
+            // Determine if this is item-level or category-level selection
+            const isItemLevel = selectedQuestion.includes('::');
+            let category, itemName;
+            if (isItemLevel) {
+                [category, itemName] = selectedQuestion.split('::');
+                console.log('Item-level selection:', { category, itemName });
+            } else {
+                category = selectedQuestion;
+                console.log('Category-level selection:', category);
+            }
+            
+            // Calculate data for real data
             const realDataByYear = {};
             
             allScores.forEach(score => {
@@ -1076,11 +1152,27 @@
                     const dateStr = score.timestamp.split(' ')[0];
                     const year = parseInt(dateStr.split('/')[2]);
                     
-                    if (score.category_totals && score.category_totals[selectedQuestion] !== undefined) {
-                        if (!realDataByYear[year]) {
-                            realDataByYear[year] = [];
+                    if (isItemLevel) {
+                        // Get item-level data from items array
+                        if (score.items && score.items[category]) {
+                            const itemData = score.items[category].find(i => i.item === itemName);
+                            if (itemData) {
+                                if (!realDataByYear[year]) {
+                                    realDataByYear[year] = [];
+                                }
+                                // Try to parse value as number, or use points as fallback
+                                const value = parseFloat(itemData.value) || itemData.points || 0;
+                                realDataByYear[year].push(value);
+                            }
                         }
-                        realDataByYear[year].push(score.category_totals[selectedQuestion]);
+                    } else {
+                        // Get category-level data from category_totals
+                        if (score.category_totals && score.category_totals[category] !== undefined) {
+                            if (!realDataByYear[year]) {
+                                realDataByYear[year] = [];
+                            }
+                            realDataByYear[year].push(score.category_totals[category]);
+                        }
                     }
                 } catch (e) {
                     console.warn('Error processing score:', e);
@@ -1161,6 +1253,11 @@
             const maxValue = Math.max(...allAverages);
             const yAxisMax = Math.ceil((maxValue * 1.1) / 10) * 10; // Round up to nearest 10
             
+            // Build chart title
+            const chartTitle = isItemLevel ? 
+                `${itemName} - Yearly Average Comparison` :
+                `${category} - Yearly Average Comparison`;
+            
             try {
                 window.comparisonChartInstance = new Chart(ctx, {
                     type: 'bar',
@@ -1222,7 +1319,7 @@
                             },
                             title: {
                                 display: true,
-                                text: `${selectedQuestion} - Yearly Average Comparison`,
+                                text: chartTitle,
                                 font: { size: 16, weight: 'bold' },
                                 padding: { top: 10, bottom: 20 },
                                 color: '#333'
