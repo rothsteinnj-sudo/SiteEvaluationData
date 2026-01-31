@@ -752,6 +752,7 @@
         }
         
         function displayScores(scores) {
+            console.log('displayScores called with', scores.length, 'scores');
             const grid = document.getElementById('scores-grid');
             const noScores = document.getElementById('no-scores');
             const loading = document.getElementById('loading');
@@ -763,14 +764,18 @@
                 // Parse timestamp in MM/DD/YYYY format
                 const dateStr = score.timestamp.split(' ')[0]; // Get "MM/DD/YYYY" part
                 const year = parseInt(dateStr.split('/')[2]); // Extract year
+                console.log('Score timestamp:', score.timestamp, 'year:', year, 'currentYear:', currentYear);
                 return year === currentYear;
             });
+            
+            console.log('Filtered to', currentYearScores.length, 'scores for year', currentYear);
             
             if (currentYearScores.length === 0) {
                 grid.style.display = 'none';
                 noScores.style.display = 'block';
                 loading.style.display = 'none';
                 tabsContainer.style.display = 'none';
+                console.log('No scores for current year - hiding tabs');
             } else {
                 grid.innerHTML = '';
                 currentYearScores.forEach(score => {
@@ -783,21 +788,30 @@
                 
                 document.getElementById('total-count').textContent = currentYearScores.length;
                 document.getElementById('last-updated').textContent = new Date().toLocaleTimeString();
+                console.log('Display updated with', currentYearScores.length, 'scores');
             }
         }
         
         function loadScores() {
+            console.log('loadScores called');
             fetch('/api/scores')
-                .then(r => r.json())
+                .then(r => {
+                    console.log('Response received:', r.status);
+                    return r.json();
+                })
                 .then(data => {
+                    console.log('Data parsed:', data);
                     if (data.success) {
                         allScores = data.scores;
+                        console.log('AllScores set, calling displayScores with', allScores.length, 'scores');
                         displayScores(allScores);
                     } else {
+                        console.log('API returned success=false');
                         showStatus('Failed to load scores', 'error');
                     }
                 })
                 .catch(e => {
+                    console.error('Error in loadScores:', e);
                     showStatus(`Error: ${e.message}`, 'error');
                 });
         }
