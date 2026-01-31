@@ -1105,6 +1105,13 @@
             });
             
             const years = Object.keys(chartData).map(y => parseInt(y)).sort();
+            console.log('Years with data:', years);
+            
+            if (years.length === 0) {
+                console.warn('No years with data found');
+                return;
+            }
+            
             const averages = years.map(y => chartData[y].average);
             const counts = years.map(y => chartData[y].count);
             
@@ -1116,11 +1123,16 @@
                 window.comparisonChartInstance = null;
             }
             
-            // Add fake data for past years
+            // Add fake data for past years (only if we have real data to base it on)
+            const minYear = Math.min(...years);
+            console.log('Min year:', minYear);
+            
             const fakeYears = [];
-            for (let y = 2023; y < Math.min(...years); y++) {
+            for (let y = 2023; y < minYear; y++) {
                 fakeYears.push(y);
             }
+            
+            console.log('Fake years to add:', fakeYears);
             
             fakeYears.forEach(fakeYear => {
                 const variance = Math.random() * 15 - 7.5;
