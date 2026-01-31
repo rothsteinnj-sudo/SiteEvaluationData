@@ -660,6 +660,11 @@
     <script>
         let allScores = [];
         
+        console.log('🎯 Dashboard initialized - waiting for page load');
+        window.addEventListener('load', function() {
+            console.log('⏳ Page loaded, calling loadScores()');
+        });
+        
         function showStatus(message, type = 'success') {
             const statusEl = document.getElementById('status');
             statusEl.textContent = message;
