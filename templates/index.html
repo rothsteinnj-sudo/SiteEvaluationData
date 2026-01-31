@@ -1,0 +1,1385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Site Evaluation Scoring Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0A354F 0%, #00DBC5 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        header {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .logo {
+            width: 50px;
+            height: 50px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 3px solid #00DBC5;
+            font-size: 28px;
+            flex-shrink: 0;
+        }
+        
+        .header-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+        }
+        
+        .stats {
+            display: flex;
+            gap: 20px;
+        }
+        
+        .stat-box {
+            background: #f5f5f5;
+            padding: 15px 25px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .stat-box strong {
+            display: block;
+            color: #00DBC5;
+            font-size: 24px;
+            margin: 5px 0;
+        }
+        
+        .stat-box small {
+            color: #999;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 10px;
+        }
+        
+        button {
+            background: #00DBC5;
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+            font-weight: 600;
+        }
+        
+        button:hover {
+            background: #00B8A0;
+        }
+        
+        button.secondary {
+            background: #0A354F;
+            color: white;
+        }
+        
+        button.secondary:hover {
+            background: #051F32;
+        }
+        
+        .search-box {
+            flex: 1;
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        
+        .scores-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+        }
+        
+        .score-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .score-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .score-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 10px;
+        }
+        
+        .response-id {
+            font-weight: bold;
+            color: #00DBC5;
+            font-size: 16px;
+        }
+        
+        .timestamp {
+            font-size: 12px;
+            color: #999;
+        }
+        
+        .category-section {
+            margin-top: 12px;
+        }
+        
+        .category-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            cursor: pointer;
+            user-select: none;
+            border-left: 4px solid #00DBC5;
+            transition: background 0.2s;
+        }
+        
+        .category-header:hover {
+            background: #f0f1f5;
+        }
+        
+        .category-header.expanded {
+            background: #e8e9f5;
+        }
+        
+        .category-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .category-toggle {
+            display: inline-block;
+            transition: transform 0.2s;
+        }
+        
+        .category-toggle.open {
+            transform: rotate(90deg);
+        }
+        
+        .category-points {
+            font-weight: bold;
+            padding: 2px 8px;
+            border-radius: 4px;
+            background: #f0f0f0;
+        }
+        
+        .category-points.positive {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .category-points.negative {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .category-items {
+            display: none;
+            padding: 10px 0;
+            border-left: 4px solid #00DBC5;
+            margin-left: 5px;
+            padding-left: 15px;
+        }
+        
+        .category-items.show {
+            display: block;
+        }
+        
+        .item-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 13px;
+        }
+        
+        .item-row:last-child {
+            border-bottom: none;
+        }
+        
+        .item-name {
+            color: #666;
+        }
+        
+        .item-value {
+            color: #999;
+            font-style: italic;
+            margin: 0 10px;
+        }
+        
+        .item-points {
+            font-weight: 600;
+            color: #00DBC5;
+        }
+        
+        .total-score {
+            background: linear-gradient(135deg, #00DBC5 0%, #0A354F 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: white;
+            font-size: 18px;
+        }
+        
+        .status {
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            display: block;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
+        }
+        
+        .no-scores {
+            text-align: center;
+            padding: 40px;
+            background: white;
+            border-radius: 10px;
+            color: #999;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #ccc;
+        }
+        
+        .tabs-container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+        
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        
+        .tab-button {
+            flex: 1;
+            padding: 15px 20px;
+            background: #f8f9fa;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            color: #666;
+            transition: all 0.3s;
+        }
+        
+        .tab-button:hover {
+            background: #f0f1f5;
+        }
+        
+        .tab-button.active {
+            background: linear-gradient(135deg, #00DBC5 0%, #0A354F 100%);
+            color: white;
+            border-bottom: 3px solid #00DBC5;
+        }
+        
+        .tab-content {
+            display: none;
+            padding: 30px;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #00DBC5 0%, #0A354F 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .stat-card h3 {
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 10px;
+            opacity: 0.9;
+        }
+        
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+        }
+        
+        .stat-card.alt {
+            background: linear-gradient(135deg, #0A354F 0%, #00DBC5 100%);
+        }
+        
+        .stat-card.alt2 {
+            background: linear-gradient(135deg, #00DBC5 0%, #0A354F 100%);
+        }
+        
+        .year-breakdown {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .year-breakdown h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+        
+        .year-row {
+            display: grid;
+            grid-template-columns: 150px 1fr;
+            gap: 20px;
+            padding: 15px 0;
+            border-bottom: 1px solid #f0f0f0;
+            align-items: center;
+        }
+        
+        .year-row:last-child {
+            border-bottom: none;
+        }
+        
+        .year-label {
+            font-weight: 600;
+            color: #00DBC5;
+        }
+        
+        .year-stats {
+            display: flex;
+            gap: 30px;
+        }
+        
+        .year-stat {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .year-stat-label {
+            font-size: 12px;
+            color: #999;
+            margin-bottom: 3px;
+        }
+        
+        .year-stat-value {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .sites-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+        
+        .site-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            transition: all 0.3s;
+            border-top: 4px solid #00DBC5;
+        }
+        
+        .site-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .site-name {
+            font-size: 18px;
+            font-weight: bold;
+            color: #0A354F;
+            margin-bottom: 10px;
+        }
+        
+        .site-info {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            font-size: 13px;
+            color: #666;
+        }
+        
+        .site-stat {
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .site-stat-label {
+            color: #999;
+        }
+        
+        .site-stat-value {
+            font-weight: 600;
+            color: #00DBC5;
+        }
+        
+        .site-detail-header {
+            background: linear-gradient(135deg, #00DBC5 0%, #0A354F 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+        }
+        
+        .site-detail-header h2 {
+            margin: 0;
+            font-size: 28px;
+        }
+        
+        .site-detail-header p {
+            margin: 8px 0 0 0;
+            opacity: 0.9;
+        }
+        
+        .site-scores-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎯 Site Evaluation Scoring Dashboard</h1>
+            <p style="color: #666; margin-top: 5px;">Interactive scoring system for clinical research sites
+                <a href="https://docs.google.com/spreadsheets/d/1pO0-3Px5GStwT0vGqXiN6Z1Bjp2Vczwg2peXwITXGiY/edit#gid=0" target="_blank" style="color: #00DBC5; margin-left: 15px; text-decoration: none; font-weight: 600;">📋 View Raw Data</a>
+            </p>
+            
+            <div class="header-info">
+                <div class="stats">
+                    <div class="stat-box">
+                        <small>Total Responses</small>
+                        <strong id="total-count">-</strong>
+                    </div>
+                    <div class="stat-box">
+                        <small>Last Updated</small>
+                        <strong id="last-updated">-</strong>
+                    </div>
+                </div>
+                
+                <div class="controls">
+                    <input type="text" class="search-box" id="search" placeholder="Search responses...">
+                    <button onclick="refreshScores()">🔄 Refresh</button>
+                    <button class="secondary" onclick="downloadExport()">📥 Export</button>
+                </div>
+            </div>
+        </header>
+        
+        <div id="status" class="status"></div>
+        
+        <div id="loading" class="loading">
+            <p>Loading scores...</p>
+        </div>
+        
+        <div class="tabs-container" style="display: none;" id="tabs-container">
+            <div class="tabs" id="tabs-list">
+                <button class="tab-button active" onclick="switchTab('individual')">📋 Site Evaluation Scores 2026</button>
+                <button class="tab-button" onclick="switchTab('sites')">📊 Average Item Scores 2026</button>
+                <button class="tab-button" onclick="switchTab('year')">📊 This Year</button>
+            </div>
+            
+            <div id="individual" class="tab-content active">
+                <div id="scores-grid" class="scores-container"></div>
+                <div id="no-scores" class="no-scores" style="display: none;">
+                    <p>No scores available. Click "Refresh" to load scores from Google Sheets.</p>
+                </div>
+            </div>
+            
+            <div id="sites" class="tab-content">
+                <div id="sites-list"></div>
+            </div>
+            
+            <div id="year" class="tab-content">
+                <div id="year-stats"></div>
+            </div>
+            
+            <div id="site-detail" class="tab-content">
+                <button onclick="backToSites()" style="margin-bottom: 20px;">← Back to Sites</button>
+                <div id="site-detail-content"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let allScores = [];
+        
+        function showStatus(message, type = 'success') {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = message;
+            statusEl.className = `status ${type}`;
+            setTimeout(() => {
+                statusEl.className = 'status';
+            }, 5000);
+        }
+        
+        function formatPoints(points) {
+            const className = points >= 0 ? 'positive' : 'negative';
+            return `<span class="category-points ${className}">${points > 0 ? '+' : ''}${points}</span>`;
+        }
+        
+        function createScoreCard(score) {
+            const card = document.createElement('div');
+            card.className = 'score-card';
+            
+            const timestamp = score.timestamp || 'N/A';
+            const studyCap = score.category_totals['Study Capabilities'] || 0;
+            const phaseCap = score.category_totals['Phase Capabilities'] || 0;
+            const keyPers = score.category_totals['Key Personnel'] || 0;
+            
+            // Build category sections with items
+            const categories = [
+                { name: 'Study Capabilities', points: studyCap, items: score.items['Study Capabilities'] || [] },
+                { name: 'Phase Capabilities', points: phaseCap, items: score.items['Phase Capabilities'] || [] },
+                { name: 'Key Personnel', points: keyPers, items: score.items['Key Personnel'] || [] }
+            ];
+            
+            let categoriesHTML = '';
+            categories.forEach((cat, idx) => {
+                const itemsHTML = cat.items.map(item => `
+                    <div class="item-row">
+                        <span class="item-name">${item.item}</span>
+                        <span class="item-value">${item.value}</span>
+                        <span class="item-points">${item.points > 0 ? '+' : ''}${item.points}</span>
+                    </div>
+                    ${item.link ? `
+                    <div class="item-row" style="margin-top: 8px; padding: 8px; background: #f9f9f9; border-left: 3px solid #00DBC5; border-radius: 3px;">
+                        <span class="item-name" style="color: #00DBC5; font-weight: 600; font-size: 13px;">
+                            📎 ${item.link.name}
+                        </span>
+                        <a href="${item.link.url}" target="_blank" style="color: #00DBC5; text-decoration: none; font-size: 12px; white-space: nowrap;">
+                            View →
+                        </a>
+                    </div>
+                    ` : ''}
+                `).join('');
+                
+                categoriesHTML += `
+                    <div class="category-section">
+                        <div class="category-header" onclick="toggleCategory(this)">
+                            <div class="category-title">
+                                <span class="category-toggle">▶</span>
+                                ${cat.name}
+                            </div>
+                            ${formatPoints(cat.points)}
+                        </div>
+                        <div class="category-items">
+                            ${itemsHTML}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            card.innerHTML = `
+                <div class="score-header">
+                    <div>
+                        <div class="response-id">${score.site_name || 'Unknown Site'}</div>
+                        <div class="timestamp">${timestamp}</div>
+                    </div>
+                </div>
+                
+                ${categoriesHTML}
+                
+                <div class="total-score">
+                    Total: ${score.total_score > 0 ? '+' : ''}${score.total_score}
+                </div>
+            `;
+            
+            return card;
+        }
+        
+        function toggleCategory(headerEl) {
+            const itemsEl = headerEl.nextElementSibling;
+            headerEl.classList.toggle('expanded');
+            itemsEl.classList.toggle('show');
+            headerEl.querySelector('.category-toggle').classList.toggle('open');
+        }
+        
+        function displayScores(scores) {
+            const grid = document.getElementById('scores-grid');
+            const noScores = document.getElementById('no-scores');
+            const loading = document.getElementById('loading');
+            const tabsContainer = document.getElementById('tabs-container');
+            
+            // Filter scores for current year (2026)
+            const currentYear = new Date().getFullYear();
+            const currentYearScores = scores.filter(score => {
+                const scoreYear = new Date(score.timestamp).getFullYear();
+                return scoreYear === currentYear;
+            });
+            
+            if (currentYearScores.length === 0) {
+                grid.style.display = 'none';
+                noScores.style.display = 'block';
+                loading.style.display = 'none';
+                tabsContainer.style.display = 'none';
+            } else {
+                grid.innerHTML = '';
+                currentYearScores.forEach(score => {
+                    grid.appendChild(createScoreCard(score));
+                });
+                grid.style.display = 'grid';
+                noScores.style.display = 'none';
+                loading.style.display = 'none';
+                tabsContainer.style.display = 'block';
+                
+                document.getElementById('total-count').textContent = currentYearScores.length;
+                document.getElementById('last-updated').textContent = new Date().toLocaleTimeString();
+            }
+        }
+        
+        function loadScores() {
+            fetch('/api/scores')
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        allScores = data.scores;
+                        displayScores(allScores);
+                    } else {
+                        showStatus('Failed to load scores', 'error');
+                    }
+                })
+                .catch(e => {
+                    showStatus(`Error: ${e.message}`, 'error');
+                });
+        }
+        
+        function refreshScores() {
+            document.getElementById('loading').style.display = 'block';
+            fetch('/api/refresh', {method: 'POST'})
+                .then(r => r.json())
+                .then(data => {
+                    showStatus(data.message, data.success ? 'success' : 'error');
+                    loadScores();
+                })
+                .catch(e => {
+                    showStatus(`Error: ${e.message}`, 'error');
+                });
+        }
+        
+        function downloadExport() {
+            fetch('/api/export')
+                .then(r => r.json())
+                .then(data => {
+                    const json = JSON.stringify(data, null, 2);
+                    const blob = new Blob([json], {type: 'application/json'});
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `site-scores-${new Date().toISOString().split('T')[0]}.json`;
+                    a.click();
+                })
+                .catch(e => showStatus(`Error: ${e.message}`, 'error'));
+        }
+        
+        document.getElementById('search').addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase();
+            const filtered = allScores.filter(s => 
+                (s.site_name || '').toLowerCase().includes(query) ||
+                s.timestamp.toLowerCase().includes(query)
+            );
+            displayScores(filtered);
+        });
+        
+        function switchTab(tabName) {
+            // Hide all tabs
+            const tabs = document.querySelectorAll('.tab-content');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            
+            // Remove active class from all buttons
+            const buttons = document.querySelectorAll('.tab-button');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            
+            // Show selected tab
+            document.getElementById(tabName).classList.add('active');
+            
+            // Add active class to clicked button
+            event.target.classList.add('active');
+            
+            // Calculate and display stats if needed
+            if (tabName === 'year') {
+                displayYearStats();
+            } else if (tabName === 'sites') {
+                displayAverageItemScores2026();
+            } else if (tabName.startsWith('year-')) {
+                displayYearStatsTab(tabName.replace('year-', ''));
+            }
+        }
+        
+        function displayAverageItemScores2026() {
+            const currentYear = new Date().getFullYear();
+            const scores2026 = allScores.filter(score => {
+                const scoreYear = new Date(score.timestamp).getFullYear();
+                return scoreYear === currentYear;
+            });
+            
+            if (scores2026.length === 0) {
+                document.getElementById('sites-list').innerHTML = '<p>No data available for 2026</p>';
+                return;
+            }
+            
+            // Calculate average points for each item
+            const itemAverages = {};
+            const categoryItems = {
+                'Study Capabilities': [],
+                'Phase Capabilities': [],
+                'Key Personnel': []
+            };
+            
+            scores2026.forEach(score => {
+                Object.keys(score.items || {}).forEach(category => {
+                    const items = score.items[category] || [];
+                    items.forEach(item => {
+                        const itemKey = `${category}|${item.item}`;
+                        if (!itemAverages[itemKey]) {
+                            itemAverages[itemKey] = {
+                                category: category,
+                                item: item.item,
+                                totalPoints: 0,
+                                totalRawValue: 0,
+                                count: 0
+                            };
+                            if (!categoryItems[category].includes(item.item)) {
+                                categoryItems[category].push(item.item);
+                            }
+                        }
+                        itemAverages[itemKey].totalPoints += item.points || 0;
+                        
+                        // Parse raw value (could be string or number)
+                        let rawValue = 0;
+                        if (typeof item.value === 'number') {
+                            rawValue = item.value;
+                        } else if (typeof item.value === 'string') {
+                            const parsed = parseFloat(item.value);
+                            rawValue = isNaN(parsed) ? 0 : parsed;
+                        }
+                        itemAverages[itemKey].totalRawValue += rawValue;
+                        itemAverages[itemKey].count += 1;
+                    });
+                });
+            });
+            
+            // Build HTML table
+            let html = '<div style="background: white; padding: 20px; border-radius: 10px;">';
+            html += '<h2 style="color: #00DBC5; margin-bottom: 20px;">Average Item Scores - 2026</h2>';
+            html += '<p style="color: #666; margin-bottom: 20px;">Based on ' + scores2026.length + ' evaluation(s)</p>';
+            
+            // Group by category
+            Object.keys(categoryItems).forEach(category => {
+                html += '<div style="margin-bottom: 30px;">';
+                html += '<h3 style="color: #0A354F; margin-bottom: 15px;">' + category + '</h3>';
+                html += '<table style="width: 100%; border-collapse: collapse;">';
+                html += '<tr style="background: #f5f5f5; border-bottom: 2px solid #ddd;">';
+                html += '<th style="padding: 12px; text-align: left; font-weight: 600; color: #333;">Item</th>';
+                html += '<th style="padding: 12px; text-align: center; font-weight: 600; color: #333;">Average Points</th>';
+                html += '<th style="padding: 12px; text-align: center; font-weight: 600; color: #333;">Raw Score Average</th>';
+                html += '</tr>';
+                
+                categoryItems[category].forEach(itemName => {
+                    const itemKey = `${category}|${itemName}`;
+                    const avg = itemAverages[itemKey];
+                    const avgPoints = (avg.totalPoints / avg.count).toFixed(2);
+                    const avgRaw = (avg.totalRawValue / avg.count).toFixed(2);
+                    html += '<tr style="border-bottom: 1px solid #eee;">';
+                    html += '<td style="padding: 12px; color: #333;">' + itemName + '</td>';
+                    html += '<td style="padding: 12px; text-align: center; color: #00DBC5; font-weight: 600;">' + avgPoints + '</td>';
+                    html += '<td style="padding: 12px; text-align: center; color: #666;">' + avgRaw + '</td>';
+                    html += '</tr>';
+                });
+                
+                html += '</table>';
+                html += '</div>';
+            });
+            
+            html += '</div>';
+            document.getElementById('sites-list').innerHTML = html;
+        }
+        
+        function displaySitesList() {
+            const sites = {};
+            
+            // Group scores by site
+            allScores.forEach(score => {
+                const siteName = score.site_name || 'Unknown';
+                if (!sites[siteName]) {
+                    sites[siteName] = {
+                        name: siteName,
+                        scores: [],
+                        totalScore: 0,
+                        lastUpdated: ''
+                    };
+                }
+                sites[siteName].scores.push(score);
+                sites[siteName].totalScore += score.total_score;
+                sites[siteName].lastUpdated = score.timestamp;
+            });
+            
+            let html = '<div class="sites-grid">';
+            
+            Object.values(sites).forEach(site => {
+                const avgScore = (site.totalScore / site.scores.length).toFixed(2);
+                const lastDate = new Date(site.lastUpdated).toLocaleDateString();
+                html += `
+                    <div class="site-card" onclick="viewSiteDetail('${site.name.replace(/'/g, "\\'")}')">
+                        <div class="site-name">${site.name}</div>
+                        <div class="site-info">
+                            <div class="site-stat">
+                                <span class="site-stat-label">Evaluations:</span>
+                                <span class="site-stat-value">${site.scores.length}</span>
+                            </div>
+                            <div class="site-stat">
+                                <span class="site-stat-label">Avg Score:</span>
+                                <span class="site-stat-value">${avgScore}</span>
+                            </div>
+                            <div class="site-stat">
+                                <span class="site-stat-label">Last Updated:</span>
+                                <span class="site-stat-value">${lastDate}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            document.getElementById('sites-list').innerHTML = html;
+        }
+        
+        function viewSiteDetail(siteName) {
+            const siteScores = allScores.filter(s => (s.site_name || 'Unknown') === siteName);
+            
+            if (siteScores.length === 0) {
+                return;
+            }
+            
+            let html = `
+                <div class="site-detail-header">
+                    <h2>${siteName}</h2>
+                    <p>${siteScores.length} evaluation${siteScores.length !== 1 ? 's' : ''} | Last updated: ${new Date(siteScores[siteScores.length - 1].timestamp).toLocaleDateString()}</p>
+                </div>
+                
+                <div class="site-scores-container">
+            `;
+            
+            siteScores.forEach((score, idx) => {
+                const timestamp = new Date(score.timestamp).toLocaleDateString();
+                const studyCap = score.category_totals['Study Capabilities'] || 0;
+                const phaseCap = score.category_totals['Phase Capabilities'] || 0;
+                const keyPers = score.category_totals['Key Personnel'] || 0;
+                
+                html += `
+                    <div class="score-card">
+                        <div class="score-header">
+                            <div>
+                                <div class="response-id">Evaluation #${idx + 1}</div>
+                                <div class="timestamp">${timestamp}</div>
+                            </div>
+                        </div>
+                `;
+                
+                // Build categories with items
+                const categories = [
+                    { name: 'Study Capabilities', points: studyCap, items: score.items['Study Capabilities'] || [] },
+                    { name: 'Phase Capabilities', points: phaseCap, items: score.items['Phase Capabilities'] || [] },
+                    { name: 'Key Personnel', points: keyPers, items: score.items['Key Personnel'] || [] }
+                ];
+                
+                categories.forEach((cat) => {
+                    const itemsHTML = cat.items.map(item => `
+                        <div class="item-row">
+                            <span class="item-name">${item.item}</span>
+                            <span class="item-value">${item.value}</span>
+                            <span class="item-points">${item.points > 0 ? '+' : ''}${item.points}</span>
+                        </div>
+                        ${item.link ? `
+                        <div class="item-row" style="margin-top: 8px; padding: 8px; background: #f9f9f9; border-left: 3px solid #00DBC5; border-radius: 3px;">
+                            <span class="item-name" style="color: #00DBC5; font-weight: 600; font-size: 13px;">
+                                📎 ${item.link.name}
+                            </span>
+                            <a href="${item.link.url}" target="_blank" style="color: #00DBC5; text-decoration: none; font-size: 12px; white-space: nowrap;">
+                                View →
+                            </a>
+                        </div>
+                        ` : ''}
+                    `).join('');
+                    
+                    html += `
+                        <div class="category-section">
+                            <div class="category-header" onclick="toggleCategory(this)">
+                                <div class="category-title">
+                                    <span class="category-toggle">▶</span>
+                                    ${cat.name}
+                                </div>
+                                ${formatPoints(cat.points)}
+                            </div>
+                            <div class="category-items">
+                                ${itemsHTML}
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                html += `
+                        <div class="total-score">
+                            Total: ${score.total_score > 0 ? '+' : ''}${score.total_score}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            
+            document.getElementById('site-detail-content').innerHTML = html;
+            switchTab('site-detail');
+        }
+        
+        function backToSites() {
+            switchTab('sites');
+        }
+        
+        function calculateYearStats() {
+            const currentYear = new Date().getFullYear();
+            const stats = {
+                totalScores: 0,
+                totalPoints: 0,
+                average: 0,
+                categories: {
+                    'Study Capabilities': { total: 0, count: 0 },
+                    'Phase Capabilities': { total: 0, count: 0 },
+                    'Key Personnel': { total: 0, count: 0 }
+                },
+                siteScores: {}
+            };
+            
+            allScores.forEach(score => {
+                const scoreYear = new Date(score.timestamp).getFullYear();
+                if (scoreYear === currentYear) {
+                    stats.totalScores++;
+                    stats.totalPoints += score.total_score;
+                    
+                    // Add to site scores
+                    const siteName = score.site_name || 'Unknown';
+                    if (!stats.siteScores[siteName]) {
+                        stats.siteScores[siteName] = { total: 0, count: 0 };
+                    }
+                    stats.siteScores[siteName].total += score.total_score;
+                    stats.siteScores[siteName].count++;
+                    
+                    // Category totals
+                    Object.keys(score.category_totals).forEach(category => {
+                        stats.categories[category].total += score.category_totals[category];
+                        stats.categories[category].count++;
+                    });
+                }
+            });
+            
+            if (stats.totalScores > 0) {
+                stats.average = (stats.totalPoints / stats.totalScores).toFixed(2);
+                Object.keys(stats.categories).forEach(cat => {
+                    if (stats.categories[cat].count > 0) {
+                        stats.categories[cat].average = (stats.categories[cat].total / stats.categories[cat].count).toFixed(2);
+                    }
+                });
+            }
+            
+            return stats;
+        }
+        
+        function calculateAllYearsStats() {
+            const stats = {};
+            
+            allScores.forEach(score => {
+                const year = new Date(score.timestamp).getFullYear();
+                if (!stats[year]) {
+                    stats[year] = {
+                        totalScores: 0,
+                        totalPoints: 0,
+                        categories: {
+                            'Study Capabilities': { total: 0, count: 0 },
+                            'Phase Capabilities': { total: 0, count: 0 },
+                            'Key Personnel': { total: 0, count: 0 }
+                        }
+                    };
+                }
+                
+                stats[year].totalScores++;
+                stats[year].totalPoints += score.total_score;
+                
+                Object.keys(score.category_totals).forEach(category => {
+                    stats[year].categories[category].total += score.category_totals[category];
+                    stats[year].categories[category].count++;
+                });
+            });
+            
+            // Calculate averages
+            Object.keys(stats).forEach(year => {
+                const yearData = stats[year];
+                if (yearData.totalScores > 0) {
+                    yearData.average = (yearData.totalPoints / yearData.totalScores).toFixed(2);
+                    Object.keys(yearData.categories).forEach(cat => {
+                        if (yearData.categories[cat].count > 0) {
+                            yearData.categories[cat].average = (yearData.categories[cat].total / yearData.categories[cat].count).toFixed(2);
+                        }
+                    });
+                }
+            });
+            
+            return stats;
+        }
+        
+        function displayYearStats() {
+            const currentYear = new Date().getFullYear();
+            const allYearsData = calculateAllYearsStats();
+            const years = Object.keys(allYearsData).sort().reverse();
+            
+            // Add dynamic tabs for each year
+            const tabsList = document.getElementById('tabs-list');
+            
+            // Remove old year tabs
+            const oldYearTabs = tabsList.querySelectorAll('[data-year-tab]');
+            oldYearTabs.forEach(tab => tab.remove());
+            
+            // Add new year tabs (excluding current year which is already there)
+            years.filter(y => y !== currentYear.toString()).forEach(year => {
+                const btn = document.createElement('button');
+                btn.className = 'tab-button';
+                btn.textContent = `📈 ${year}`;
+                btn.setAttribute('data-year-tab', year);
+                btn.onclick = () => switchTab(`year-${year}`);
+                tabsList.appendChild(btn);
+            });
+            
+            const stats = calculateYearStats();
+            const container = document.getElementById('year-stats');
+            
+            if (stats.totalScores === 0) {
+                container.innerHTML = '<div class="no-scores">No scores available for this year.</div>';
+                return;
+            }
+            
+            let html = `
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>Total Evaluations</h3>
+                        <div class="stat-value">${stats.totalScores}</div>
+                    </div>
+                    <div class="stat-card alt">
+                        <h3>Average Total Score</h3>
+                        <div class="stat-value">${stats.average}</div>
+                    </div>
+                    <div class="stat-card alt2">
+                        <h3>Year</h3>
+                        <div class="stat-value">${currentYear}</div>
+                    </div>
+                </div>
+                
+                <div class="year-breakdown">
+                    <h3>Category Averages</h3>
+            `;
+            
+            Object.keys(stats.categories).forEach(category => {
+                const catData = stats.categories[category];
+                const avg = catData.average || 'N/A';
+                html += `
+                    <div class="year-row">
+                        <div class="year-label">${category}</div>
+                        <div class="year-stats">
+                            <div class="year-stat">
+                                <div class="year-stat-label">Count</div>
+                                <div class="year-stat-value">${catData.count}</div>
+                            </div>
+                            <div class="year-stat">
+                                <div class="year-stat-label">Average</div>
+                                <div class="year-stat-value">${avg}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            
+            // Add site breakdown
+            if (Object.keys(stats.siteScores).length > 0) {
+                html += '<div class="year-breakdown"><h3>Average Score by Site</h3>';
+                Object.entries(stats.siteScores).forEach(([site, data]) => {
+                    const avg = (data.total / data.count).toFixed(2);
+                    html += `
+                        <div class="year-row">
+                            <div class="year-label">${site}</div>
+                            <div class="year-stats">
+                                <div class="year-stat">
+                                    <div class="year-stat-label">Count</div>
+                                    <div class="year-stat-value">${data.count}</div>
+                                </div>
+                                <div class="year-stat">
+                                    <div class="year-stat-label">Average</div>
+                                    <div class="year-stat-value">${avg}</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+            }
+            
+            container.innerHTML = html;
+        }
+        
+        function displayYearStatsTab(year) {
+            const allYearsData = calculateAllYearsStats();
+            const yearData = allYearsData[year];
+            
+            if (!yearData) {
+                return;
+            }
+            
+            const stats = {
+                totalScores: yearData.totalScores,
+                totalPoints: yearData.totalPoints,
+                average: yearData.average,
+                categories: yearData.categories,
+                siteScores: {}
+            };
+            
+            // Get site scores for this year
+            allScores.forEach(score => {
+                const scoreYear = new Date(score.timestamp).getFullYear().toString();
+                if (scoreYear === year) {
+                    const siteName = score.site_name || 'Unknown';
+                    if (!stats.siteScores[siteName]) {
+                        stats.siteScores[siteName] = { total: 0, count: 0 };
+                    }
+                    stats.siteScores[siteName].total += score.total_score;
+                    stats.siteScores[siteName].count++;
+                }
+            });
+            
+            let html = `
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>Total Evaluations</h3>
+                        <div class="stat-value">${stats.totalScores}</div>
+                    </div>
+                    <div class="stat-card alt">
+                        <h3>Average Total Score</h3>
+                        <div class="stat-value">${stats.average}</div>
+                    </div>
+                    <div class="stat-card alt2">
+                        <h3>Year</h3>
+                        <div class="stat-value">${year}</div>
+                    </div>
+                </div>
+                
+                <div class="year-breakdown">
+                    <h3>Category Averages</h3>
+            `;
+            
+            Object.keys(stats.categories).forEach(category => {
+                const catData = stats.categories[category];
+                const avg = catData.average || 'N/A';
+                html += `
+                    <div class="year-row">
+                        <div class="year-label">${category}</div>
+                        <div class="year-stats">
+                            <div class="year-stat">
+                                <div class="year-stat-label">Count</div>
+                                <div class="year-stat-value">${catData.count}</div>
+                            </div>
+                            <div class="year-stat">
+                                <div class="year-stat-label">Average</div>
+                                <div class="year-stat-value">${avg}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            
+            // Add site breakdown
+            if (Object.keys(stats.siteScores).length > 0) {
+                html += '<div class="year-breakdown"><h3>Average Score by Site</h3>';
+                Object.entries(stats.siteScores).forEach(([site, data]) => {
+                    const avg = (data.total / data.count).toFixed(2);
+                    html += `
+                        <div class="year-row">
+                            <div class="year-label">${site}</div>
+                            <div class="year-stats">
+                                <div class="year-stat">
+                                    <div class="year-stat-label">Count</div>
+                                    <div class="year-stat-value">${data.count}</div>
+                                </div>
+                                <div class="year-stat">
+                                    <div class="year-stat-label">Average</div>
+                                    <div class="year-stat-value">${avg}</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+            }
+            
+            // Create a temporary container for this year
+            let container = document.getElementById(`year-stats-${year}`);
+            if (!container) {
+                container = document.createElement('div');
+                container.id = `year-stats-${year}`;
+                document.getElementById('year').parentElement.appendChild(container);
+            }
+            container.innerHTML = html;
+        }
+        
+        function displayAllYearsStats() {
+            const stats = calculateAllYearsStats();
+            const container = document.getElementById('all-years-stats');
+            
+            if (Object.keys(stats).length === 0) {
+                container.innerHTML = '<div class="no-scores">No scores available.</div>';
+                return;
+            }
+            
+            let html = '<div class="year-breakdown"><h3>Yearly Summary</h3>';
+            
+            const years = Object.keys(stats).sort().reverse();
+            
+            years.forEach(year => {
+                const yearData = stats[year];
+                html += `
+                    <div class="year-row">
+                        <div class="year-label">Year ${year}</div>
+                        <div class="year-stats">
+                            <div class="year-stat">
+                                <div class="year-stat-label">Evaluations</div>
+                                <div class="year-stat-value">${yearData.totalScores}</div>
+                            </div>
+                            <div class="year-stat">
+                                <div class="year-stat-label">Avg Score</div>
+                                <div class="year-stat-value">${yearData.average || 'N/A'}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            
+            html += '<div class="year-breakdown"><h3>Category Averages by Year</h3>';
+            
+            years.forEach(year => {
+                const yearData = stats[year];
+                html += `<div style="margin-bottom: 20px;"><h4 style="color: #667eea; margin-bottom: 10px;">Year ${year}</h4>`;
+                
+                Object.keys(yearData.categories).forEach(category => {
+                    const catData = yearData.categories[category];
+                    const avg = catData.average || 'N/A';
+                    html += `
+                        <div class="year-row" style="padding: 10px 0;">
+                            <div class="year-label" style="font-size: 13px;">${category}</div>
+                            <div class="year-stats">
+                                <div class="year-stat">
+                                    <div class="year-stat-label">Average</div>
+                                    <div class="year-stat-value">${avg}</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                html += '</div>';
+            });
+            
+            html += '</div>';
+            container.innerHTML = html;
+        }
+        
+        // Show tabs container when scores load
+        function showTabsContainer() {
+            document.getElementById('tabs-container').style.display = 'block';
+        }
+        
+        // Load scores on page load
+        loadScores();
+    </script>
+</body>
+</html>

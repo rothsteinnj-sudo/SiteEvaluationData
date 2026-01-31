@@ -1,0 +1,26 @@
+===============================================
+SETUP: Add Google Form URL to Dashboard
+===============================================
+
+I've added "View Raw" links to each evaluation so you can click through to the original Google Form response.
+
+TO ACTIVATE:
+1. Find your Google Form URL:
+   - Open your form in Google Forms
+   - Click "Send" button (top right)
+   - Copy the URL from the "Link" section
+
+2. Update app.py:
+   - Open app.py with a text editor
+   - Find line ~19 with: GOOGLE_FORM_URL = '...'
+   - Replace with your actual form URL
+   - Save the file
+
+3. Restart the dashboard:
+   - Press Ctrl+C in your terminal to stop the server
+   - Run: bash start_web.sh
+
+4. Refresh your browser - you'll now see "📋 View Raw" buttons on each score!
+
+For detailed instructions, see: GOOGLE_FORM_SETUP.md
+===============================================
